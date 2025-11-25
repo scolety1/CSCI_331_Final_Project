@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Family Tree</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>COLETY FAMILY TREE</h1>
+
+    <!-- Family Tree Display -->
+    <div class="tree-layout">
+        <div class="generation" id="gen-1"></div>
+        <div class="generation" id="gen-2"></div>
+        <div class="generation" id="gen-3"></div>
+        <!-- Add more generations as needed -->
+    </div>
+
+    <!-- Load logic scripts -->
+
+    <button id="addPersonBtn" title="Add Person">+</button>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add a New Family Member</h2>
+            <form id="addPersonForm">
+            <input type="text" id="name" placeholder="Name" required><br>
+            <input type="date" id="birthDate" placeholder="Birthdate" required><br>
+            <input type="text" id="parents" placeholder="Parents (comma-separated)"><br>
+            <input type="text" id="spouse" placeholder="Spouse"><br>
+            <input type="text" id="separatedWith" placeholder="Separated With (comma-separated)"><br>
+            <input type="number" id="generation" placeholder="Generation" min="1" required><br>
+            <button type="submit">Add</button>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module" src="familyTree.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
