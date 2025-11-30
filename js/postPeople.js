@@ -1,5 +1,11 @@
 import { db } from "./firebase.js";
 import {
+  getAllPeople,
+  figureOutGeneration,
+  buildFullName,
+  normalizeNamePart
+} from "./helpers.js";
+import {
   addDoc,
   collection,
   Timestamp
@@ -7,42 +13,34 @@ import {
 
 const form = document.getElementById("addPersonForm");
 
-async function findPersonByName(name) {
-  if (!name) return null;
-
-  peopleRef = collection(db, "people");
-  const q = query(
-    peopleRef,
-    where("name", "==", name.toLowerCase()),
-    limit(1)
-  )
-}
-
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   // ----- GET & CLEAN INPUT VALUES -----
-  const rawFirstName = document.getElementById("firstName").value.trim();
-  const rawMiddleInitial = document.getElementById("middleInitial").value.trim();
-  const rawLastName = document.getElementById("lastName").value.trim();
-  const rawSpouse = document.getElementById("spouse").value.trim();
-  const rawParent1 = document.getElementById("parent1").value.trim();
-  const rawParent2 = document.getElementById("parent2").value.trim();
-  const birthDateRaw = document.getElementById("birthDate").value;
+  const rawFirstName        = document.getElementById("firstName").value.trim();
+  const rawMiddleInitial    = document.getElementById("middleInitial").value.trim();
+  const rawLastName         = document.getElementById("lastName").value.trim();
+  const rawSpouse           = document.getElementById("spouse").value.trim();
+  const rawParent1          = document.getElementById("parent1").value.trim();
+  const rawParent2          = document.getElementById("parent2").value.trim();
+  const birthDateRaw        = document.getElementById("birthDate").value;
 
-  const firstName = rawFirstName.toLowerCase();
-  const middleInitial = rawMiddleInitial.toLowerCase();
-  const lastName = rawLastName.toLowerCase();
+  const firstName           = rawFirstName.toLowerCase();
+  const middleInitial       = rawMiddleInitial.toLowerCase();
+  const lastName            = rawLastName.toLowerCase();
 
-  const spouseRaw = rawSpouse.toLowerCase();
-  const parent1 = rawParent1.toLowerCase();
-  const parent2 = rawParent2.toLowerCase();
-   
+  const spouseRaw           = rawSpouse.toLowerCase();
+  const parent1             = rawParent1.toLowerCase();
+  const parent2             = rawParent2.toLowerCase();
+  
+  let spouseFirstName = "";
+  let spouseLastName = "";
+
   if (spouseRaw) {
     const parts = spouseRaw.split(" ");
     spouseFirstName = parts[0] || "";
-    spouseLastName = parts[1] || "";
+    spouseLastName = parts.slice(1).join(" ") || "";
   }
 
 
@@ -54,16 +52,26 @@ form.addEventListener("submit", async (e) => {
   const personData = { 
     firstName,
     lastName
-   };
+  };
 
   // Optional fields added only if provided
-  if (middleInitial) personData.middleInitial = middleInitial;
-  if (birthDate) personData.birthDate = birthDate;
-  if (parent1) personData.parent1 = parent1;
-  if (parent2) personData.parent2 = parent2;
-  if (spouseFirstName) personData.spouseFirstName = spouseFirstName;
-  if (spouseLastName) personData.spouseLastName = spouseLastName;
+  if (middleInitial)    personData.middleInitial    = middleInitial;
+  if (birthDate)        personData.birthDate        = birthDate;
+  if (parent1)          personData.parent1          = parent1;
+  if (parent2)          personData.parent2          = parent2;
+  if (spouseFirstName)  personData.spouseFirstName  = spouseFirstName;
+  if (spouseLastName)   personData.spouseLastName   = spouseLastName;
+
+  // Figure out this person's generation
+  try {
+    const allPeople = await getAllPeople();
+    personData.generation = figureOutGeneration(personData, allPeople);
+  } catch (err) {
+    console.error("Error figuring out generation, defaulting to 10:", err);
+    personData.geneartion = 1;
+  }
   
+
   // ----- SAVE TO FIRESTORE -----
   try {
     await addDoc(collection(db, "people"), personData);

@@ -1,213 +1,179 @@
-import { db } from "./firebase.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+import {
+  getAllPeople,
+  groupByGeneration,
+  sortGenerationKeys,
+  sortPeopleByName,
+  areSpouses,
+  toTitleFullName,
+} from "./helpers.js";
 
-function toTitleCase(str) {
-    return str
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-}
+/* ---------------------------
+   MODAL: ADD PERSON (UI ONLY)
+--------------------------- */
 
-async function loadFamilyTree() {
-    const peopleCol = collection(db, "people");
-    const snapshot = await getDocs(peopleCol);
+function setupAddPersonModal() {
+  const modal = document.getElementById("addModal");
+  const btn = document.getElementById("addPersonBtn");
+  const closeBtn = document.querySelector(".modal .close");
 
-    const peopleList = snapshot.docs.map(doc => ({
-        docID: doc.id,
-        ...doc.data()
-    }));
+  if (!modal || !btn || !closeBtn) return;
 
+  btn.onclick = () => {
+    modal.style.display = "block";
+  };
 
-    const peopleByName = new Map();
+  closeBtn.onclick = () => {
+    modal.style.display = "none";
+  };
 
-    for (const person of peopleList) {
-        peopleByName.set(person.name.trim().toLowerCase(), person);
+  window.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.style.display = "none";
     }
+  });
 
-    const modal = document.getElementById("addModal");
-    const btn = document.getElementById("addPersonBtn");
-    const span = document.querySelector(".close");
-
-    btn.onclick = () => {
-        modal.style.display = "block";
-    };
-
-    span.onclick = () => {
-        modal.style.display = "none";
-    };
-
-    window.onclick = event => {
-        if (event.target === modal) {
-        modal.style.display = "none";
-        }
-    };
-
-    document.getElementById("addPersonForm").addEventListener("submit", e => {
-        e.preventDefault();
-        // TODO: Add person to Firestore and reload tree
-        alert("Person added! (Functionality coming soon)");
-        modal.style.display = "none";
+  const form = document.getElementById("addPersonForm");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      // TODO: hook this up to your postPeople logic
+      alert("Add person functionality coming soon!");
+      modal.style.display = "none";
     });
-
-
-
-
-    const rendered = new Set();
-    const nodeTree = new Map();
-    const personElements = new Map();
-    const parentMap = new Map();
-    const tempElements = new Map();
-    let count = 0;
-
-    for (const person of peopleList) {
-        const generation = person.generation || 1;
-        const container = document.getElementById(`gen-${generation}`);
-        if (!container) continue;
-
-        if (rendered.has(person.docID)) continue;
-
-        const spouseName = person.spouse?.trim().toLowerCase();
-        const isSeparated = Array.isArray(person.separatedWith) && person.separatedWith.length > 0;
-
-        // Handle separated logic first
-        if (isSeparated) {
-            for (const exName of person.separatedWith) {
-                const ex = peopleByName.get(person.spouse?.trim().toLowerCase());
-                const spouseObj = peopleByName.get(person.spouse?.trim().toLowerCase());
-
-                if (ex && !rendered.has(ex.docID)) {
-                    const divorcedContainer = document.createElement("div");
-                    divorcedContainer.className = "divorced-pair";
-
-                    const exCard = createPersonCard(ex);
-                    const personCard = createPersonCard(person);
-                    const spouseCard = spouseObj && !rendered.has(spouseObj.docID)
-                        ? createPersonCard(spouseObj)
-                        : null;
-
-                    divorcedContainer.appendChild(exCard);
-                    divorcedContainer.appendChild(personCard);
-                    if (spouseCard) divorcedContainer.appendChild(spouseCard);
-
-                    tempElements.set(person.name, divorcedContainer);
-                    tempElements.set(ex.name, divorcedContainer);
-                    if (spouseObj) tempElements.set(spouseObj.name, divorcedContainer);
-
-                    rendered.add(person.docID);
-                    rendered.add(ex.docID);
-                    if (spouseObj) rendered.add(spouseObj.docID);
-                }
-            }
-            continue;
-        }
-
-        // Handle spouse pairing
-        if (spouseName) {
-            for (const candidate of peopleList) {
-                if (
-                    candidate.generation === generation &&
-                    candidate.name.toLowerCase() === spouseName &&
-                    candidate.spouse?.toLowerCase() === person.name.toLowerCase() &&
-                    !rendered.has(candidate.docID)
-                ) {
-                    const pairContainer = document.createElement('div');
-                    pairContainer.className = 'spouse-pair';
-
-                    const personCard = createPersonCard(person);
-                    const spouseCard = createPersonCard(candidate);
-
-                    pairContainer.appendChild(personCard);
-                    pairContainer.appendChild(spouseCard);
-
-                    nodeTree.set(person.name, (1000 * generation) + count);
-                    nodeTree.set(candidate.name, (1000 * generation) + count + 1);
-
-                    tempElements.set(person.name, pairContainer);
-                    tempElements.set(candidate.name, pairContainer);
-
-                    rendered.add(person.docID);
-                    rendered.add(candidate.docID);
-
-                    count += 2;
-                    break;
-                }
-            }
-        }
-
-        if (!rendered.has(person.docID)) {
-            const personCard = createPersonCard(person);
-            tempElements.set(person.name, personCard);
-            rendered.add(person.docID);
-            nodeTree.set(person.name, (1000 * generation) + count);
-            count++;
-        }
-
-        if (Array.isArray(person.parents) && person.parents.length > 0) {
-            const key = person.parents.slice().sort().join(',');
-            if (!parentMap.has(key)) parentMap.set(key, new Set());
-            parentMap.get(key).add(person.name);
-        }
-    }
-
-    editFamilyTree(parentMap, tempElements);
-
-    // Append elements to DOM
-    for (const [name, element] of tempElements.entries()) {
-        const generation = peopleList.find(p => p.name === name)?.generation || 1;
-        const container = document.getElementById(`gen-${generation}`);
-        if (container && !container.contains(element)) {
-            container.appendChild(element);
-        }
-    }  
-
-    return { count, nodeTree };
+  }
 }
+
+/* ---------------------------
+   CARD CREATION
+--------------------------- */
 
 function createPersonCard(person) {
-    const birthDate = person.birthDate?.toDate();
-    const formattedDate = birthDate
-        ? birthDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-        : "Unknown";
-
-    const link = document.createElement('a');
-    link.href = `profile.html?person=${person.docID}`;
-    link.style.textDecoration = "none";
-    link.style.color = "inherit";
-
-    const card = document.createElement('div');
-    card.className = 'person-card';
-    card.innerHTML = `
-        <h3>${toTitleCase(person.name)}</h3>
-        <p>Born: ${formattedDate}</p>
-    `;
-
-    link.appendChild(card);
-    return link;
-}
-
-function editFamilyTree(parentMap, personElements) {
-    parentMap.forEach((childrenSet, parentKey) => {
-        const children = Array.from(childrenSet);
-        if (children.length < 2) return;
-
-        const siblingGroup = document.createElement("div");
-        siblingGroup.className = "sibling-group";
-
-        let container = null;
-        const added = new Set();
-
-        for (const childName of children) {
-            const el = personElements.get(childName);
-            if (!el || added.has(el)) continue;
-            if (!container) container = el.closest(".generation");
-            siblingGroup.appendChild(el);
-            added.add(el);
-        }
-
-        if (siblingGroup.children.length > 1 && container) {
-            container.appendChild(siblingGroup);
-        }
+  // birthDate is likely a Firestore Timestamp
+  let formattedDate = "Unknown";
+  if (person.birthDate && typeof person.birthDate.toDate === "function") {
+    const d = person.birthDate.toDate();
+    formattedDate = d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
+  }
+
+  const fullTitleName = toTitleFullName(person.firstName, person.lastName);
+
+  const link = document.createElement("a");
+  link.href = `profile.html?person=${person.id}`;
+  link.style.textDecoration = "none";
+  link.style.color = "inherit";
+
+  const card = document.createElement("div");
+  card.className = "person-card";
+  card.innerHTML = `
+    <h3>${fullTitleName}</h3>
+    <p>Born: ${formattedDate}</p>
+  `;
+
+  link.appendChild(card);
+  return link;
 }
 
-loadFamilyTree();
+/* ---------------------------
+   RENDER ONE GENERATION
+--------------------------- */
+
+function renderGeneration(genNumber, peopleInGen, treeLayout) {
+  const genContainer = document.createElement("div");
+  genContainer.className = "generation";
+  genContainer.id = `gen-${genNumber}`;
+
+  const title = document.createElement("h2");
+  title.className = "generation-title";
+  title.textContent = `Generation ${genNumber}`;
+  genContainer.appendChild(title);
+
+  const row = document.createElement("div");
+  row.className = "generation-row";
+
+  // Pair spouses using helpers.areSpouses
+  const usedIds = new Set();
+
+  peopleInGen.forEach((person) => {
+    if (usedIds.has(person.id)) return;
+
+    // Try to find their spouse in the same generation
+    const spouse = peopleInGen.find((p) => !usedIds.has(p.id) && areSpouses(person, p));
+
+    if (spouse) {
+      // spouse-pair container
+      const pairContainer = document.createElement("div");
+      pairContainer.className = "spouse-pair";
+
+      const personCard = createPersonCard(person);
+      const spouseCard = createPersonCard(spouse);
+
+      pairContainer.appendChild(personCard);
+      pairContainer.appendChild(spouseCard);
+
+      row.appendChild(pairContainer);
+
+      usedIds.add(person.id);
+      usedIds.add(spouse.id);
+    } else {
+      // single person
+      const card = createPersonCard(person);
+      row.appendChild(card);
+      usedIds.add(person.id);
+    }
+  });
+
+  genContainer.appendChild(row);
+  treeLayout.appendChild(genContainer);
+}
+
+/* ---------------------------
+   MAIN LOAD FUNCTION
+--------------------------- */
+
+async function loadFamilyTree() {
+  const treeLayout = document.getElementById("tree-layout");
+  if (!treeLayout) {
+    console.error("No #tree-layout div found");
+    return;
+  }
+
+  treeLayout.innerHTML = "<p>Loading family tree...</p>";
+
+  try {
+    const allPeople = await getAllPeople();
+
+    if (!allPeople || allPeople.length === 0) {
+      treeLayout.innerHTML = "<p>No family members found in the database.</p>";
+      return;
+    }
+
+    // Group & sort by generation using helpers
+    const genMap = groupByGeneration(allPeople);
+    const genKeys = sortGenerationKeys(genMap);
+
+    treeLayout.innerHTML = ""; // clear loading text
+
+    genKeys.forEach((genNumber) => {
+      let peopleInGen = genMap.get(genNumber) || [];
+      peopleInGen = sortPeopleByName(peopleInGen);
+
+      renderGeneration(genNumber, peopleInGen, treeLayout);
+    });
+  } catch (err) {
+    console.error("Error loading family tree:", err);
+    treeLayout.innerHTML = "<p>Error loading family tree.</p>";
+  }
+}
+
+/* ---------------------------
+   INIT
+--------------------------- */
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupAddPersonModal();
+  loadFamilyTree();
+});

@@ -1,12 +1,14 @@
 import { db } from "./firebase.js";
-import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+import { doc, getDoc, deleteDoc, editDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+import { 
+    getChildren,
+ } from "./helpers.js";
 
 let personId = null;
 
 async function loadProfile() {
     const params = new URLSearchParams(window.location.search);
     personId = params.get("person");
-
     if (!personId) {
         document.getElementById("name").textContent = "No person ID provided in URL.";
         return;
@@ -30,6 +32,19 @@ async function loadProfile() {
     document.getElementById("children").textContent = (data.children || []).join(', ') || "No children.";
     document.getElementById("bio").textContent = data.bio || "No bio available.";
 }
+
+document.getElementById("editPersonBtn").addEventListenerer("click", async () =>{
+    if (!personId.id) return;
+
+    try {
+        await editDoc(doc(db, "people",personId));
+        alert("Feel free to edit this person.")
+    } catch (error) {
+        console.error("Error editing person: ", error);
+        alert("Failed to edit this perso.");
+    }
+});
+
 
 // Hook up the delete button
 document.getElementById("deletePersonBtn").addEventListener("click", async () => {

@@ -39,7 +39,7 @@ export function toTitleFullName(firstName, lastName) {
    FIRESTORE LOOKUPS
 ----------------------------------- */
 
-// Get all people (used in loadFamilyTree)
+// Get all people (used in loadFamilyTree, figureOutGeneration, etc.)
 export async function getAllPeople() {
   const snapshot = await getDocs(collection(db, "people"));
   return snapshot.docs.map(doc => ({
@@ -97,15 +97,75 @@ export function areSpouses(personA, personB) {
   );
 }
 
+// Does this person have at least one parent string?
+export function hasParents(person) {
+  if (!person) return false;
+  return Boolean(
+    (person.parent1 && person.parent1.trim() !== "") ||
+    (person.parent2 && person.parent2.trim() !== "")
+  );
+}
+
+// Does this person have two parents?
+export function hasTwoParents(person) {
+  if (!person) return false;
+  return Boolean(
+    (person.parent1 && person.parent1.trim() !== "") &&
+    (person.parent2 && person.parent2.trim() !== "")
+  );
+}
+
 // Get children of a given person from a list of all people.
 // Assumes child.parent1 / parent2 store "first last" in lowercase.
-export function getChildrenOf(person, allPeople) {
+export function getChildren(person, allPeople) {
   if (!person) return [];
   const fullName = buildFullName(person.firstName, person.lastName);
 
-  return allPeople.filter(
-    p => p.parent1 === fullName || p.parent2 === fullName
+  return allPeople.filter(p =>
+    p.parent1 === fullName || p.parent2 === fullName
   );
+}
+
+// Get full siblings: share BOTH parents (order doesn’t matter)
+export function getSiblings(person, allPeople) {
+  if (!person) return [];
+
+  return allPeople.filter(p => {
+    if (p.id === person.id) return false; // skip self
+
+    const sameOrder =
+      p.parent1 === person.parent1 &&
+      p.parent2 === person.parent2;
+
+    const swappedOrder =
+      p.parent1 === person.parent2 &&
+      p.parent2 === person.parent1;
+
+    return sameOrder || swappedOrder;
+  });
+}
+
+// Get half-siblings: share EXACTLY one parent
+export function getHalfSiblings(person, allPeople) {
+  if (!person) return [];
+
+  return allPeople.filter(p => {
+    if (p.id === person.id) return false; // skip self
+
+    // share at least one parent (either slot)
+    const shareAny =
+      p.parent1 === person.parent1 ||
+      p.parent2 === person.parent1 ||
+      p.parent1 === person.parent2 ||
+      p.parent2 === person.parent2;
+
+    // share both parents (full sibling)
+    const shareBoth =
+      (p.parent1 === person.parent1 && p.parent2 === person.parent2) ||
+      (p.parent1 === person.parent2 && p.parent2 === person.parent1);
+
+    return shareAny && !shareBoth;
+  });
 }
 
 // Very simple sibling check: do they share at least one parent string?
@@ -120,33 +180,96 @@ export function areSiblings(personA, personB) {
   return parentsA.some(pa => parentsB.includes(pa));
 }
 
+// Convenience: does this person have *any* siblings?
+export function hasSiblings(person, allPeople) {
+  return !!getSiblings(person, allPeople).length;
+}
+
+// Convenience: does this person have *any* children?
+export function hasChildren(person, allPeople) {
+  return !!getChildren(person, allPeople).length;
+}
+
 /* -----------------------------------
    GENERATION HELPERS
 ----------------------------------- */
 
-export function groupByGeneration(people) {
-  const map = new Map();
+// Infer generation using parents, siblings, and children.
+// Requires allPeople array.
+export function figureOutGeneration(person, allPeople) {
+    if (!person) return 1;
 
-  people.forEach(p => {
-    const gen = typeof p.generation === "number" ? p.generation : 2;
-    if (!map.has(gen)) map.set(gen, []);
-    map.get(gen).push(p);
-  });
-  return map;
+    // 1. Try parents → parent.generation + 1
+    const parentObjs = allPeople.filter(p => {
+        const parentFull = buildFullName(p.firstName, p.lastName);
+        return (
+            person.parent1 === parentFull ||
+            person.parent2 === parentFull
+        );
+    });
+
+    if (parentObjs.length > 0) {
+        const parentGens = parentObjs
+        .filter(p => typeof p.generation === "number")
+        .map(p => p.generation);
+        
+        if (parentGens.length > 0) {
+            return Math.min(...parentGens) + 1;
+        }
+    }
+
+  // 2. Try siblings → share their generation
+    const siblings = getSiblings(person, allPeople);
+    if (siblings.length > 0) {
+        const sibWithGen = siblings.find(s => typeof s.generation === "number");
+        if (sibWithGen) {
+        return sibWithGen.generation;
+        }
+    }
+
+  // 3. Try children → generation = child.generation - 1
+    const children = getChildren(person, allPeople);
+    const childWithGen = children.find(c => typeof c.generation === "number");
+    if (childWithGen) {
+        return childWithGen.generation - 1;
+    }
+
+  // 4. Default: root ancestor
+    return 1;
+}
+
+// Group people by generation, computing it if needed
+export function groupByGeneration(people) {
+    const map = new Map();
+
+    people.forEach(p => {
+        let gen = p.generation;
+
+        if (typeof gen !== "number") {
+        // we need the whole list to infer generation
+        gen = figureOutGeneration(p, people);
+        p.generation = gen; // cache it on the object for later
+        }
+
+        if (!map.has(gen)) map.set(gen, []);
+        map.get(gen).push(p);
+
+    });
+    return map;
 }
 
 // Sort generation keys: [1,2,3,...]
 export function sortGenerationKeys(genMap) {
-  return [...genMap.keys()].sort((a, b) => a - b);
+    return [...genMap.keys()].sort((a, b) => a - b);
 }
 
 // Sort people alphabetically by last, then first
 export function sortPeopleByName(people) {
-  return [...people].sort((a, b) => {
-    const lastDiff = (a.lastName || "").localeCompare(b.lastName || "");
-    if (lastDiff !== 0) return lastDiff;
-    return (a.firstName || "").localeCompare(b.firstName || "");
-  });
+    return [...people].sort((a, b) => {
+        const lastDiff = (a.lastName || "").localeCompare(b.lastName || "");
+        if (lastDiff !== 0) return lastDiff;
+        return (a.firstName || "").localeCompare(b.firstName || "");
+    });
 }
 
 /* -----------------------------------
@@ -154,12 +277,12 @@ export function sortPeopleByName(people) {
 ----------------------------------- */
 
 export function isEmpty(value) {
-  return value === undefined || value === null || value === "";
+    return value === undefined || value === null || value === "";
 }
 
 // Very simple base validation, you can expand this later
 export function validatePersonData(person) {
-  if (!person) return false;
-  if (!person.firstName || !person.lastName) return false;
-  return true;
+    if (!person) return false;
+    if (!person.firstName || !person.lastName) return false;
+    return true;
 }
