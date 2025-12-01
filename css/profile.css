@@ -1,0 +1,25 @@
+/* ===== PROFILE PAGE ===== */
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    text-align: left;
+}
+
+.profileInfo {
+    color: #111827;
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+h1 {
+    color: #1f2937; /* dark gray */
+}
+
+.birthday {
+    color: #3e8e41;
+}
