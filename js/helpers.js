@@ -39,7 +39,7 @@ export function toTitleFullName(firstName, lastName) {
    FIRESTORE LOOKUPS
 ----------------------------------- */
 
-// Get all people (used in loadFamilyTree, figureOutGeneration, etc.)
+// Get all people (used in loadFamilyTree, etc.)
 export async function getAllPeople() {
   const snapshot = await getDocs(collection(db, "people"));
   return snapshot.docs.map(doc => ({
@@ -191,85 +191,254 @@ export function hasChildren(person, allPeople) {
 }
 
 /* -----------------------------------
-   GENERATION HELPERS
+   GENERATION + BFS LAYOUT HELPERS
 ----------------------------------- */
 
-// Infer generation using parents, siblings, and children.
-// Requires allPeople array.
-export function figureOutGeneration(person, allPeople) {
-    if (!person) return 1;
-
-    // 1. Try parents → parent.generation + 1
-    const parentObjs = allPeople.filter(p => {
-        const parentFull = buildFullName(p.firstName, p.lastName);
-        return (
-            person.parent1 === parentFull ||
-            person.parent2 === parentFull
-        );
-    });
-
-    if (parentObjs.length > 0) {
-        const parentGens = parentObjs
-        .filter(p => typeof p.generation === "number")
-        .map(p => p.generation);
-        
-        if (parentGens.length > 0) {
-            return Math.min(...parentGens) + 1;
-        }
+// Internal: build lookup "first last" -> person
+function buildNameToPerson(people) {
+  const map = new Map();
+  people.forEach(p => {
+    const full = buildFullName(p.firstName, p.lastName);
+    if (full) {
+      map.set(full, p);
     }
-
-  // 2. Try siblings → share their generation
-    const siblings = getSiblings(person, allPeople);
-    if (siblings.length > 0) {
-        const sibWithGen = siblings.find(s => typeof s.generation === "number");
-        if (sibWithGen) {
-        return sibWithGen.generation;
-        }
-    }
-
-  // 3. Try children → generation = child.generation - 1
-    const children = getChildren(person, allPeople);
-    const childWithGen = children.find(c => typeof c.generation === "number");
-    if (childWithGen) {
-        return childWithGen.generation - 1;
-    }
-
-  // 4. Default: root ancestor
-    return 1;
+  });
+  return map;
 }
 
-// Group people by generation, computing it if needed
-export function groupByGeneration(people) {
-    const map = new Map();
+// Internal: build parentName -> [children] map
+function buildChildrenMap(people) {
+  const childrenMap = new Map();
 
-    people.forEach(p => {
-        let gen = p.generation;
-
-        if (typeof gen !== "number") {
-        // we need the whole list to infer generation
-        gen = figureOutGeneration(p, people);
-        p.generation = gen; // cache it on the object for later
-        }
-
-        if (!map.has(gen)) map.set(gen, []);
-        map.get(gen).push(p);
-
+  people.forEach(child => {
+    [child.parent1, child.parent2].forEach(parentName => {
+      if (!parentName) return;
+      if (!childrenMap.has(parentName)) {
+        childrenMap.set(parentName, []);
+      }
+      childrenMap.get(parentName).push(child);
     });
-    return map;
+  });
+
+  return childrenMap;
+}
+
+// NEW: align spouse generations so married couple stays in same row
+function alignSpouseGenerations(people) {
+  const n = people.length;
+
+  for (let i = 0; i < n; i++) {
+    const p = people[i];
+
+    // Find their spouse in the list, if any
+    const spouse = people.find(other => other.id !== p.id && areSpouses(p, other));
+    if (!spouse) continue;
+
+    if (p.generation === spouse.generation) continue;
+
+    const pHasParents = hasParents(p);
+    const sHasParents = hasParents(spouse);
+
+    let targetGen;
+
+    if (pHasParents && !sHasParents) {
+      // Anchor spouse with no parents to the one that has parents
+      targetGen = p.generation;
+    } else if (!pHasParents && sHasParents) {
+      targetGen = spouse.generation;
+    } else {
+      // Both have (or both don't have) parents → keep kids below them, so use the higher gen
+      targetGen = Math.max(
+        typeof p.generation === "number" ? p.generation : 1,
+        typeof spouse.generation === "number" ? spouse.generation : 1
+      );
+    }
+
+    p.generation = targetGen;
+    spouse.generation = targetGen;
+  }
+}
+
+// NEW: align co-parents (people who share a child) so they stay in same generation
+function alignCoParentGenerations(people) {
+  const nameToPerson = buildNameToPerson(people);
+
+  people.forEach(child => {
+    const p1Name = child.parent1;
+    const p2Name = child.parent2;
+
+    if (!p1Name || !p2Name) return; // need both parents to align
+
+    const p1 = nameToPerson.get(p1Name);
+    const p2 = nameToPerson.get(p2Name);
+
+    if (!p1 || !p2) return;
+    if (typeof p1.generation !== "number" || typeof p2.generation !== "number") return;
+
+    if (p1.generation === p2.generation) return;
+
+    // Keep them both in the higher generation so kids stay below
+    const targetGen = Math.max(p1.generation, p2.generation);
+    p1.generation = targetGen;
+    p2.generation = targetGen;
+  });
+}
+
+
+// Internal: assign generation + BFS index so siblings stay together
+function assignGenerationsBFS(people) {
+  if (!Array.isArray(people) || people.length === 0) return people;
+
+  const nameToPerson = buildNameToPerson(people);
+  const childrenMap = buildChildrenMap(people);
+
+  // Reset any previous generation / bfs index
+  people.forEach(p => {
+    p.generation = undefined;
+    p._bfsIndex = undefined;
+  });
+
+  // 1. Roots = people with no known parents in the dataset
+  const roots = [];
+  people.forEach(p => {
+    const hasParent1 = !!p.parent1 && nameToPerson.has(p.parent1);
+    const hasParent2 = !!p.parent2 && nameToPerson.has(p.parent2);
+    if (!hasParent1 && !hasParent2) {
+      roots.push(p);
+    }
+  });
+
+  if (roots.length === 0 && people.length > 0) {
+    // fallback: treat the first person as a root if everything looks connected / messy
+    roots.push(people[0]);
+  }
+
+  const queue = [];
+  const visited = new Set();
+  let bfsIndex = 0;
+
+  roots.forEach(root => {
+    if (visited.has(root.id)) return;
+    root.generation = 1;
+    queue.push(root);
+    visited.add(root.id);
+  });
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    current._bfsIndex = bfsIndex++;
+
+    const parentFull = buildFullName(current.firstName, current.lastName);
+    const children = childrenMap.get(parentFull) || [];
+
+    children.forEach(child => {
+      const proposedGen = (current.generation || 1) + 1;
+
+      // 🔑 Allow child to "upgrade" to a higher generation if a later parent is deeper
+      if (
+        typeof child.generation !== "number" ||
+        child.generation < proposedGen
+      ) {
+        child.generation = proposedGen;
+      }
+
+      if (!visited.has(child.id)) {
+        visited.add(child.id);
+        queue.push(child);
+      }
+    });
+  }
+
+  // Any leftover disconnected people get default generation and index
+  people.forEach(p => {
+    if (typeof p.generation !== "number") {
+      p.generation = 1;
+    }
+    if (p._bfsIndex == null) {
+      p._bfsIndex = bfsIndex++;
+    }
+  });
+
+  // First: fix spouse generations after BFS
+  alignSpouseGenerations(people);
+
+  // Then: fix co-parent generations (people who share a child)
+  alignCoParentGenerations(people);
+
+  return people;
+}
+
+// Legacy-style helper: figure out a single person's generation given the full list
+export function figureOutGeneration(person, allPeople) {
+  if (!person || !Array.isArray(allPeople)) return 1;
+  assignGenerationsBFS(allPeople);
+
+  const full = buildFullName(person.firstName, person.lastName);
+  const match =
+    allPeople.find(p => p.id === person.id) ||
+    allPeople.find(p => buildFullName(p.firstName, p.lastName) === full);
+
+  if (match && typeof match.generation === "number") {
+    return match.generation;
+  }
+  return 1;
 }
 
 // Sort generation keys: [1,2,3,...]
 export function sortGenerationKeys(genMap) {
-    return [...genMap.keys()].sort((a, b) => a - b);
+  return [...genMap.keys()].sort((a, b) => a - b);
 }
 
-// Sort people alphabetically by last, then first
-export function sortPeopleByName(people) {
-    return [...people].sort((a, b) => {
-        const lastDiff = (a.lastName || "").localeCompare(b.lastName || "");
-        if (lastDiff !== 0) return lastDiff;
-        return (a.firstName || "").localeCompare(b.firstName || "");
+
+// Group people by generation, using BFS assignment and BFS order
+export function groupByGeneration(people) {
+  const list = assignGenerationsBFS([...people]); // shallow copy just in case
+
+  const map = new Map();
+  list.forEach(p => {
+    const gen = p.generation;
+    if (!map.has(gen)) map.set(gen, []);
+    map.get(gen).push(p);
+  });
+
+  // Within each generation, keep BFS order (siblings together),
+  // and within siblings, optionally sort by birth date if available.
+  map.forEach(arr => {
+    arr.sort((a, b) => {
+      const ai = a._bfsIndex ?? 0;
+      const bi = b._bfsIndex ?? 0;
+      const idxDiff = ai - bi;
+      if (idxDiff !== 0) return idxDiff;
+
+      // same BFS cluster → use birthdate to order siblings from oldest to youngest if possible
+      const ta = a.birthDate && typeof a.birthDate.toDate === "function"
+        ? a.birthDate.toDate().getTime()
+        : null;
+      const tb = b.birthDate && typeof b.birthDate.toDate === "function"
+        ? b.birthDate.toDate().getTime()
+        : null;
+
+      if (ta != null && tb != null) {
+        return ta - tb;
+      }
+
+      // fallback: alphabetical
+      const lastDiff = (a.lastName || "").localeCompare(b.lastName || "");
+      if (lastDiff !== 0) return lastDiff;
+      return (a.firstName || "").localeCompare(b.firstName || "");
     });
+  });
+
+  return map;
+}
+
+// Sort people alphabetically by last, then first (still useful elsewhere)
+export function sortPeopleByName(people) {
+  return [...people].sort((a, b) => {
+    const lastDiff = (a.lastName || "").localeCompare(b.lastName || "");
+    if (lastDiff !== 0) return lastDiff;
+    return (a.firstName || "").localeCompare(b.firstName || "");
+  });
 }
 
 /* -----------------------------------
@@ -277,12 +446,12 @@ export function sortPeopleByName(people) {
 ----------------------------------- */
 
 export function isEmpty(value) {
-    return value === undefined || value === null || value === "";
+  return value === undefined || value === null || value === "";
 }
 
 // Very simple base validation, you can expand this later
 export function validatePersonData(person) {
-    if (!person) return false;
-    if (!person.firstName || !person.lastName) return false;
-    return true;
+  if (!person) return false;
+  if (!person.firstName || !person.lastName) return false;
+  return true;
 }

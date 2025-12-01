@@ -11,7 +11,7 @@ body {
 
 /* Headings */
 h1, h2, h3 {
-    color: #f9fafb;
+    color: black;
     margin-bottom: 16px;
 }
 
@@ -19,6 +19,7 @@ h1, h2, h3 {
 p {
     font-size: 1.1rem;
     line-height: 1.5;
+    color: red;
 }
 
 /* Buttons (base) */

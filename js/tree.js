@@ -2,7 +2,6 @@ import {
   getAllPeople,
   groupByGeneration,
   sortGenerationKeys,
-  sortPeopleByName,
   areSpouses,
   toTitleFullName,
 } from "./helpers.js";
@@ -36,7 +35,7 @@ function setupAddPersonModal() {
   if (form) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      // TODO: hook this up to your postPeople logic
+      // TODO: hook this up to your real postPeople logic
       alert("Add person functionality coming soon!");
       modal.style.display = "none";
     });
@@ -68,9 +67,11 @@ function createPersonCard(person) {
 
   const card = document.createElement("div");
   card.className = "person-card";
+
   card.innerHTML = `
     <h3>${fullTitleName}</h3>
     <p>Born: ${formattedDate}</p>
+    <p class="debug-gen">Generation: ${person.generation}</p>
   `;
 
   link.appendChild(card);
@@ -78,7 +79,7 @@ function createPersonCard(person) {
 }
 
 /* ---------------------------
-   RENDER ONE GENERATION
+   RENDER ONE GENERATION ROW
 --------------------------- */
 
 function renderGeneration(genNumber, peopleInGen, treeLayout) {
@@ -101,7 +102,9 @@ function renderGeneration(genNumber, peopleInGen, treeLayout) {
     if (usedIds.has(person.id)) return;
 
     // Try to find their spouse in the same generation
-    const spouse = peopleInGen.find((p) => !usedIds.has(p.id) && areSpouses(person, p));
+    const spouse = peopleInGen.find(
+      (p) => !usedIds.has(p.id) && areSpouses(person, p)
+    );
 
     if (spouse) {
       // spouse-pair container
@@ -145,22 +148,27 @@ async function loadFamilyTree() {
 
   try {
     const allPeople = await getAllPeople();
+    console.log("All people from Firestore:", allPeople);
 
     if (!allPeople || allPeople.length === 0) {
       treeLayout.innerHTML = "<p>No family members found in the database.</p>";
       return;
     }
 
-    // Group & sort by generation using helpers
+    // Group & sort by generation using BFS-based helpers
     const genMap = groupByGeneration(allPeople);
     const genKeys = sortGenerationKeys(genMap);
+
+    console.log("Generation keys:", genKeys);
+    console.log("Generation map:", genMap);
 
     treeLayout.innerHTML = ""; // clear loading text
 
     genKeys.forEach((genNumber) => {
-      let peopleInGen = genMap.get(genNumber) || [];
-      peopleInGen = sortPeopleByName(peopleInGen);
+      const peopleInGen = genMap.get(genNumber) || [];
+      console.log(`Generation ${genNumber} people:`, peopleInGen);
 
+      // IMPORTANT: do NOT resort by name here; we rely on BFS order
       renderGeneration(genNumber, peopleInGen, treeLayout);
     });
   } catch (err) {
