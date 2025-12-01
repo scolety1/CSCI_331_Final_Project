@@ -6,7 +6,7 @@
     },
     {
       "source": "/home",
-      "destination": "/home.html"
+      "destination": "/html/home_page.html"
     },
     {
       "source": "/tree",
