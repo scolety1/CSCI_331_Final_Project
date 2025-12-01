@@ -21,8 +21,157 @@
 
 
     <main>
-        <!--Basic shit for a home page-->
+        <section class="welcome-section">
+            <h2>Welcome to the Family Tree App</h2>
+            <p>Create and manage your family tree with ease. Add family members, view relationships, and explore your family history.</p>
+        </section>
+
+        <section class="instructions-section">
+            <h2>How to Use the Family Tree</h2>
+            
+            <div class="instruction-card">
+                <h3>1. View Your Family Tree</h3>
+                <p>Click on <strong>"Family Tree"</strong> in the navigation menu to see your family tree organized by generations. The tree automatically arranges family members based on their relationships.</p>
+                <a href="/tree" class="button">Go to Family Tree</a>
+            </div>
+
+            <div class="instruction-card">
+                <h3>2. Add a Family Member</h3>
+                <p>On the Family Tree page, click the <strong>green "+" button</strong> in the bottom right corner to add a new family member.</p>
+                <ul class="instruction-list">
+                    <li><strong>Required:</strong> First Name and Last Name</li>
+                    <li><strong>Optional:</strong> Middle Initial, Birth Date, Parents, Spouse</li>
+                    <li><strong>Tip:</strong> Enter parent names as "First Last" (e.g., "John Smith")</li>
+                    <li><strong>Tip:</strong> Enter spouse name as "First Last" (e.g., "Jane Doe")</li>
+                </ul>
+            </div>
+
+            <div class="instruction-card">
+                <h3>3. View a Person's Profile</h3>
+                <p>Click on any person's card in the family tree to view their detailed profile page, including:</p>
+                <ul class="instruction-list">
+                    <li>Birth date</li>
+                    <li>Parents and children</li>
+                    <li>Spouse information</li>
+                    <li>Historical fun fact based on their birthday</li>
+                </ul>
+            </div>
+
+            <div class="instruction-card">
+                <h3>4. Edit or Remove a Person</h3>
+                <p>On a person's profile page, you can:</p>
+                <ul class="instruction-list">
+                    <li>Click <strong>"Edit This Person"</strong> to modify their information</li>
+                    <li>Click <strong>"Remove This Person"</strong> to delete them from the tree</li>
+                </ul>
+            </div>
+
+            <div class="instruction-card">
+                <h3>5. Search for Family Members (WIP)</h3>
+                <p>Use the <strong>"Search"</strong> page to quickly find family members by name.</p>
+                <a href="/search" class="button">Go to Search</a>
+            </div>
+        </section>
+
     </main>
+
+    <style>
+        .welcome-section {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .welcome-section h2 {
+            color: #f9fafb;
+            margin-bottom: 15px;
+        }
+
+        .welcome-section p {
+            color: #e0e0e0;
+            font-size: 1.2rem;
+        }
+
+        .instructions-section {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .instructions-section h2 {
+            color: #f9fafb;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .instruction-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: left;
+            border-left: 4px solid #4e7cb1;
+        }
+
+        .instruction-card h3 {
+            color: #f9fafb;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .instruction-card p {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .instruction-list {
+            color: #e0e0e0;
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .instruction-list li {
+            margin-bottom: 8px;
+        }
+
+        .tips-section {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: rgba(78, 124, 177, 0.2);
+            border-radius: 10px;
+        }
+
+        .tips-section h2 {
+            color: #f9fafb;
+            margin-bottom: 20px;
+        }
+
+        .tips-list {
+            color: #e0e0e0;
+            text-align: left;
+            line-height: 2;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tips-list li {
+            margin-bottom: 12px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .tips-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #4e7cb1;
+            font-size: 1.5rem;
+        }
+    </style>
         
     <footer>
         <small>Copyright &copy; <span id="year"></span> Flex &amp; Grid Co.</small>

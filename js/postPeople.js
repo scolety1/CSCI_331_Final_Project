@@ -65,7 +65,7 @@ form.addEventListener("submit", async (e) => {
   
   // ----- SAVE TO FIRESTORE -----
   try {
-    await addDoc(collection(db, "people"), personData);
+    await addDoc(collection(db, "example"), personData);
     alert("Person added! Reload the page to see them.");
     form.reset();
   } catch (error) {

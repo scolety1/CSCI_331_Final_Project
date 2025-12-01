@@ -41,7 +41,7 @@ export function toTitleFullName(firstName, lastName) {
 
 // Get all people (used in loadFamilyTree, etc.)
 export async function getAllPeople() {
-  const snapshot = await getDocs(collection(db, "people"));
+  const snapshot = await getDocs(collection(db, "example"));
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
@@ -55,7 +55,7 @@ export async function findPersonByFullName(firstName, lastName) {
 
   if (!cleanFirst || !cleanLast) return null;
 
-  const peopleRef = collection(db, "people");
+  const peopleRef = collection(db, "example");
   const q = query(
     peopleRef,
     where("firstName", "==", cleanFirst),

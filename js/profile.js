@@ -5,8 +5,12 @@ import {
   getDoc,
   deleteDoc,
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
-// If you want to use getChildren later, you can uncomment this import.
-// import { getChildren } from "./helpers.js";
+import { 
+  toTitleFullName, 
+  toTitle, 
+  getChildren,
+  getAllPeople 
+} from "./helpers.js";
 
 let personId = null;
 
@@ -21,7 +25,7 @@ async function loadProfile() {
   }
 
   try {
-    const docRef = doc(db, "people", personId);
+    const docRef = doc(db, "example", personId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -30,10 +34,11 @@ async function loadProfile() {
     }
 
     const data = docSnap.data();
+    const person = { id: personId, ...data };
 
-    // NAME
-    document.getElementById("name").textContent =
-      data.name || "Unnamed";
+    // NAME - combine firstName and lastName
+    const fullName = toTitleFullName(data.firstName || "", data.lastName || "");
+    document.getElementById("name").textContent = fullName || "Unnamed";
 
     // BIRTHDATE
     const birthDateEl = document.getElementById("birthDate");
@@ -49,23 +54,46 @@ async function loadProfile() {
       birthDateEl.textContent = "Unknown";
     }
 
-    // PARENTS
+    // PARENTS - format parent1 and parent2
+    const parentsList = [];
+    if (data.parent1) {
+      const parts = data.parent1.split(" ");
+      if (parts.length >= 2) {
+        parentsList.push(toTitleFullName(parts[0], parts.slice(1).join(" ")));
+      } else {
+        parentsList.push(toTitle(data.parent1));
+      }
+    }
+    if (data.parent2) {
+      const parts = data.parent2.split(" ");
+      if (parts.length >= 2) {
+        parentsList.push(toTitleFullName(parts[0], parts.slice(1).join(" ")));
+      } else {
+        parentsList.push(toTitle(data.parent2));
+      }
+    }
     document.getElementById("parents").textContent =
-      (data.parents && data.parents.length
-        ? data.parents.join(", ")
-        : "Unknown");
+      parentsList.length > 0 ? parentsList.join(" and ") : "Unknown";
 
-    // SPOUSE
+    // SPOUSE - combine spouseFirstName and spouseLastName
+    const spouseName = toTitleFullName(
+      data.spouseFirstName || "", 
+      data.spouseLastName || ""
+    );
     document.getElementById("spouse").textContent =
-      data.spouse || "No spouse listed.";
+      spouseName || "No spouse listed.";
 
-    // CHILDREN
-    // Right now this uses whatever is stored on the doc.
-    // If you prefer to query via a helper, you can swap this for getChildren(personId).
-    document.getElementById("children").textContent =
-      (data.children && data.children.length
-        ? data.children.join(", ")
-        : "No children.");
+    // CHILDREN - use helper function to get children
+    const allPeople = await getAllPeople();
+    const children = getChildren(person, allPeople);
+    if (children.length > 0) {
+      const childrenNames = children.map(child => 
+        toTitleFullName(child.firstName || "", child.lastName || "")
+      );
+      document.getElementById("children").textContent = childrenNames.join(", ");
+    } else {
+      document.getElementById("children").textContent = "No children.";
+    }
 
     // BIO
     document.getElementById("bio").textContent =
@@ -139,7 +167,7 @@ document
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, "people", personId));
+      await deleteDoc(doc(db, "example", personId));
       alert("Person removed successfully.");
       // Redirect back to tree page using absolute path
       window.location.href = "/tree";
