@@ -1,5 +1,4 @@
-/* ===== FAMILY TREE DEBUG MODE ===== */
-/* Only include this file while debugging layout. */
+
 
 .tree-layout {
     outline: 3px solid #10b981 !important;     /* green */

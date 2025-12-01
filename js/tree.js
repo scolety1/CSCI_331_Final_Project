@@ -14,6 +14,7 @@ function setupAddPersonModal() {
   const modal = document.getElementById("addModal");
   const btn = document.getElementById("addPersonBtn");
   const closeBtn = document.querySelector(".modal .close");
+  console.log(modal, btn, closeBtn);
 
   if (!modal || !btn || !closeBtn) return;
 

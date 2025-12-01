@@ -1,6 +1,5 @@
 /* ===== FAMILY TREE PAGE — MODERN CARD LAYOUT ===== */
 
-/* Outer tree container */
 .tree-layout {
     display: flex;
     flex-direction: column;
@@ -58,7 +57,7 @@
 .generation:last-child {
     padding-bottom: 8px;
 }
-
+/* for siblings */
 /* Container for sibling groups (children of a pair) */
 .sibling-group {
     display: flex;

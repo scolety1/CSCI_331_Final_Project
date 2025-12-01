@@ -432,7 +432,7 @@ export function groupByGeneration(people) {
   return map;
 }
 
-// Sort people alphabetically by last, then first (still useful elsewhere)
+// Sort people alphabetically 
 export function sortPeopleByName(people) {
   return [...people].sort((a, b) => {
     const lastDiff = (a.lastName || "").localeCompare(b.lastName || "");
@@ -441,9 +441,7 @@ export function sortPeopleByName(people) {
   });
 }
 
-/* -----------------------------------
-   VALIDATION HELPERS
------------------------------------ */
+/*helpers*/
 
 export function isEmpty(value) {
   return value === undefined || value === null || value === "";
