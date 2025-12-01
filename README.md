@@ -1,11 +1,4 @@
 
-* birthday fun-fact API
-* making the app usable for the public
-* inviting family members
-* all rubric requirements
-* clean markdown formatting
-* short, professional, and GitHub-ready
-
 
 ---
 
