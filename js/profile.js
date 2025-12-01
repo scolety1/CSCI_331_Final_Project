@@ -94,19 +94,32 @@ async function fetchFunFact(birthDate) {
     const month = birthDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
     const day = birthDate.getDate();
     
-    // Call the Numbers API (using HTTPS to avoid CORS issues)
-    const apiUrl = `https://numbersapi.com/${month}/${day}/date`;
-    const response = await fetch(apiUrl);
+    // Use CORS proxy to avoid CORS issues with Numbers API
+    const apiUrl = `https://numbersapi.com/${month}/${day}/date?json`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+    
+    const response = await fetch(proxyUrl);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch fun fact');
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
     
-    const funFact = await response.text();
-    funFactEl.textContent = funFact;
+    const data = await response.json();
+    // The proxy wraps the response in a contents field
+    if (data.contents) {
+      const apiResponse = JSON.parse(data.contents);
+      funFactEl.textContent = apiResponse.text || `On ${month}/${day} in history: ${apiResponse.number || 'an interesting event'} occurred.`;
+    } else {
+      throw new Error('Invalid response format');
+    }
   } catch (error) {
     console.error("Error fetching fun fact:", error);
-    funFactEl.textContent = "Could not retrieve a fun fact at this time.";
+    // Fallback: Generate a simple fun fact based on the date
+    const month = birthDate.getMonth() + 1;
+    const day = birthDate.getDate();
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    funFactEl.textContent = `On ${monthNames[month - 1]} ${day}, many interesting historical events have occurred throughout history!`;
   }
 }
 
