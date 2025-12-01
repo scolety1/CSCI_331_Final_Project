@@ -88,38 +88,28 @@ async function loadProfile() {
 // Fetch fun fact from Numbers API based on birthday
 async function fetchFunFact(birthDate) {
   const funFactEl = document.getElementById("funFact");
+  funFactEl.textContent = "Loading fun fact...";
+  
+  const month = birthDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+  const day = birthDate.getDate();
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
   
   try {
-    // Extract month and day from the birthdate
-    const month = birthDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
-    const day = birthDate.getDate();
-    
-    // Use CORS proxy to avoid CORS issues with Numbers API
-    const apiUrl = `https://numbersapi.com/${month}/${day}/date?json`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-    
-    const response = await fetch(proxyUrl);
+    // Use Vercel serverless function to avoid CORS issues
+    const apiUrl = `/api/funfact?month=${month}&day=${day}`;
+    const response = await fetch(apiUrl);
     
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     
     const data = await response.json();
-    // The proxy wraps the response in a contents field
-    if (data.contents) {
-      const apiResponse = JSON.parse(data.contents);
-      funFactEl.textContent = apiResponse.text || `On ${month}/${day} in history: ${apiResponse.number || 'an interesting event'} occurred.`;
-    } else {
-      throw new Error('Invalid response format');
-    }
+    funFactEl.textContent = data.text || `On ${monthNames[month - 1]} ${day}, many interesting historical events have occurred throughout history!`;
   } catch (error) {
     console.error("Error fetching fun fact:", error);
-    // Fallback: Generate a simple fun fact based on the date
-    const month = birthDate.getMonth() + 1;
-    const day = birthDate.getDate();
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"];
-    funFactEl.textContent = `On ${monthNames[month - 1]} ${day}, many interesting historical events have occurred throughout history!`;
+    // Fallback message
+    funFactEl.textContent = `On ${monthNames[month - 1]} ${day}, many significant historical events have occurred! Did you know that people born on this date share it with many notable figures throughout history?`;
   }
 }
 
