@@ -62,7 +62,7 @@ function createPersonCard(person) {
   const fullTitleName = toTitleFullName(person.firstName, person.lastName);
 
   const link = document.createElement("a");
-  link.href = `profile.html?person=${person.id}`;
+  link.href = `/profile?person=${person.id}`;
   link.style.textDecoration = "none";
   link.style.color = "inherit";
 
