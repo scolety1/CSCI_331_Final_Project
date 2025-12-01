@@ -1,0 +1,36 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/html/home_page.html"
+    },
+    {
+      "source": "/home",
+      "destination": "/html/home_page.html"
+    },
+    {
+      "source": "/tree",
+      "destination": "/html/tree_page.html"
+    },
+    {
+      "source": "/search",
+      "destination": "/html/search_page.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/html/profile.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}
+
