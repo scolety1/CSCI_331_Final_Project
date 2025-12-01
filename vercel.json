@@ -6,7 +6,7 @@
     },
     {
       "source": "/home",
-      "destination": "/html/home_page.html"
+      "destination": "/home.html"
     },
     {
       "source": "/tree",
@@ -19,17 +19,6 @@
     {
       "source": "/profile",
       "destination": "/html/profile.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
     }
   ]
 }
