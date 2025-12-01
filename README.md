@@ -107,8 +107,4 @@ Designed to evolve into a system where anyone can create and share their own fam
 * **Spencer Colety**
 * **Hugh Frampton**
 
----
 
-## 📝 **License**
-
-This project is for educational use as part of Montana State University’s CSCI 331 Web Development course.
