@@ -70,10 +70,43 @@ async function loadProfile() {
     // BIO
     document.getElementById("bio").textContent =
       data.bio || "No bio available.";
+
+    // FUN FACT - fetch based on birthday
+    if (data.birthDate && typeof data.birthDate.toDate === "function") {
+      const birthDate = data.birthDate.toDate();
+      await fetchFunFact(birthDate);
+    } else {
+      document.getElementById("funFact").textContent = "No birthdate available for fun fact.";
+    }
   } catch (error) {
     console.error("Error loading profile:", error);
     document.getElementById("name").textContent =
       "Error loading profile.";
+  }
+}
+
+// Fetch fun fact from Numbers API based on birthday
+async function fetchFunFact(birthDate) {
+  const funFactEl = document.getElementById("funFact");
+  
+  try {
+    // Extract month and day from the birthdate
+    const month = birthDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+    const day = birthDate.getDate();
+    
+    // Call the Numbers API (using HTTPS to avoid CORS issues)
+    const apiUrl = `https://numbersapi.com/${month}/${day}/date`;
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch fun fact');
+    }
+    
+    const funFact = await response.text();
+    funFactEl.textContent = funFact;
+  } catch (error) {
+    console.error("Error fetching fun fact:", error);
+    funFactEl.textContent = "Could not retrieve a fun fact at this time.";
   }
 }
 
@@ -86,7 +119,7 @@ document
 
     // Example: go back to tree_page with an ?edit=personId param
     // so editPeople.js can pick it up.
-    window.location.href = `tree_page.html?edit=${encodeURIComponent(
+    window.location.href = `/tree?edit=${encodeURIComponent(
       personId
     )}`;
   });
@@ -105,8 +138,8 @@ document
     try {
       await deleteDoc(doc(db, "people", personId));
       alert("Person removed successfully.");
-      // profile.html is inside /html, so this should get you back to the tree correctly:
-      window.location.href = "tree_page.html";
+      // Redirect back to tree page using absolute path
+      window.location.href = "/tree";
     } catch (error) {
       console.error("Error deleting person:", error);
       alert("Failed to delete this person.");
