@@ -150,7 +150,7 @@ document
 
     // Example: go back to tree_page with an ?edit=personId param
     // so editPeople.js can pick it up.
-    window.location.href = `/tree?edit=${encodeURIComponent(
+    window.location.href = `../html/tree_page?edit=${encodeURIComponent(
       personId
     )}`;
   });
@@ -170,7 +170,7 @@ document
       await deleteDoc(doc(db, "example", personId));
       alert("Person removed successfully.");
       // Redirect back to tree page using absolute path
-      window.location.href = "/tree";
+      window.location.href = "../html/tree_page.html";
     } catch (error) {
       console.error("Error deleting person:", error);
       alert("Failed to delete this person.");

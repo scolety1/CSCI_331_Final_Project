@@ -12,17 +12,54 @@
         <h1>Family tree</h1>
         <nav aria-label="Main">
             <ul class="nav">
-                <li><a href="/">Home</a></li>
-                <li><a href="/tree">Family Tree</a></li>
-                <li><a href="/search">Search</a></li>
+                <li><a href="home_page.html">Home</a></li>
+                <li><a href="tree_page.html">Family Tree</a></li>
+                <li><a href="search_page.html">Search</a></li>
             </ul>
         </nav>
     </header>
 
 
     <main>
-        <!--Need to add shit for a search function here-->
+        <section class="search-section">
+            <h2>Search the family tree</h2>
+
+            <form id="search-form">
+                <label for="search-input">Search by name</label>
+                <input
+                    id="search-input"
+                    type="text"
+                    placeholder="Enter a first or last name..."
+                    autocomplete="off"
+                />
+                <button type="submit">Search</button>
+            </form>
+
+            <div id="search-results" class="search-results">
+                <p>Type a name above to search.</p>
+            </div>
+        </section>
+        
+        <button id="addPersonBtn" title="Add Person">+</button>
+
+        <div id="addModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add a New Family Member</h2>
+                <form id="addPersonForm">
+                    <input type="text" id="firstName" placeholder="Enter First Name" required><br>
+                    <input type="text" id="middleInitial" placeholder="Enter Middle Initial"><br>
+                    <input type="text" id="lastName" placeholder="Enter Last Name" required><br>           
+                    <input type="date" id="birthDate" placeholder="Enter Birthdate"><br>
+                    <input type="text" id="parent1" placeholder="Enter First Parent"><br>
+                    <input type="text" id="parent2" placeholder="Enter Second Parent"><br>
+                    <input type="text" id="spouse" placeholder="Enter Spouse's First and Last Name"><br>
+                    <button type="submit">Add</button>
+                </form>
+            </div>
+        </div>
     </main>
+
         
     <footer>
         <small>Copyright &copy; <span id="year"></span> Flex &amp; Grid Co.</small>
