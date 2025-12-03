@@ -106,6 +106,64 @@ async function loadProfile() {
     } else {
       document.getElementById("funFact").textContent = "No birthdate available for fun fact.";
     }
+
+    // --- FILL EDIT FORM IF IT EXISTS ---
+    const editFirstName  = document.getElementById("editFirstName");
+    const editMiddleInit = document.getElementById("editMiddleInitial");
+    const editLastName   = document.getElementById("editLastName");
+    const editBirthDate  = document.getElementById("editBirthDate");
+    const editParent1    = document.getElementById("editParent1");
+    const editParent2    = document.getElementById("editParent2");
+    const editSpouse     = document.getElementById("editSpouse");
+    const editBio        = document.getElementById("editBio");
+    const editImage      = document.getElementById("editImage");
+
+    if (editFirstName) {
+        editFirstName.value = toTitle(data.firstName || "");
+    }
+
+    if (editMiddleInit) {
+        editMiddleInit.value = (data.middleInitial || "").toUpperCase();
+    }
+
+    if (editLastName) {
+        editLastName.value = toTitle(data.lastName || "");
+    }
+
+    if (editParent1) {
+        editParent1.value = data.parent1 ? toTitle(data.parent1) : "";
+    }
+
+    if (editParent2) {
+        editParent2.value = data.parent2 ? toTitle(data.parent2) : "";
+    }
+
+    if (editSpouse) {
+        const spouseFull = toTitleFullName(
+            data.spouseFirstName || "",
+            data.spouseLastName || ""
+        );
+        editSpouse.value = spouseFull;
+    }
+
+    if (editBio) {
+        editBio.value = data.bio || "";
+    }
+
+    if (editImage) {
+        editImage.value = data.image || "";
+    }
+
+    // Birthdate: convert Firestore Timestamp to yyyy-mm-dd for <input type="date">
+    if (editBirthDate && data.birthDate && typeof data.birthDate.toDate === "function") {
+        const d = data.birthDate.toDate();
+        const yyyy = d.getFullYear();
+        const mm   = String(d.getMonth() + 1).padStart(2, "0");
+        const dd   = String(d.getDate()).padStart(2, "0");
+        editBirthDate.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+
   } catch (error) {
     console.error("Error loading profile:", error);
     document.getElementById("name").textContent =
@@ -141,19 +199,45 @@ async function fetchFunFact(birthDate) {
   }
 }
 
-// EDIT BUTTON – for now, just redirect to your main edit page with a query param.
-// Adjust the URL and param name to match how your editPeople.js expects it.
-document
-  .getElementById("editPersonBtn")
-  .addEventListener("click", () => {
-    if (!personId) return;
+function setupEditPersonModal() {
+  const modal    = document.getElementById("editPersonModal");
+  const btn      = document.getElementById("editPersonBtn");
+  const closeBtn = document.querySelector(".modal .close");
+  const form     = document.getElementById("editPersonForm");
 
-    // Example: go back to tree_page with an ?edit=personId param
-    // so editPeople.js can pick it up.
-    window.location.href = `../html/tree_page.html?edit=${encodeURIComponent(
-      personId
-    )}`;
+  console.log(modal, btn, closeBtn);
+
+  if (!modal || !btn) return;
+
+  // Open modal
+  btn.onclick = () => {
+    modal.style.display = "block";
+  };
+
+  // Close with X
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      modal.style.display = "none";
+    };
+  }
+
+  // Close when clicking outside
+  window.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
   });
+
+  // Just prevent default on submit for now
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      // later: send updated values to Firestore
+      modal.style.display = "none";
+    });
+  }
+}
+
 
 // DELETE BUTTON
 document
@@ -179,3 +263,4 @@ document
 
 // Load the profile when the page opens
 loadProfile();
+setupEditPersonModal();

@@ -25,17 +25,47 @@
     <button id="editPersonBtn" class="Button"> Edit This Person </button>
   </div>
 
-  <div id="editPersonModal" class="modal hidden">
+  <div id="editPersonModal" class="modal">
     <div class="modal-content">
-      <button type="button" id="editCloseBtn">x</button>
-
+      <span class="close">&times;</span>
       <h2>Edit Person</h2>
       <form id="editPersonForm">
-        <label>
+        <label class="fart">
           First Name
-          <input type="text" id="firstName" placeholder="Spencer"><br>
+          <input type="text" id="editFirstName"><br>
         </label>
-        <input type="text" id="lastName" placeholder="Colety"><br>
+        <label class="fart">
+          Middle Initial
+          <input type="text" id="editMiddleInit"><br>
+        </label>
+        <label class="fart">
+          Last Name
+          <input type="text" id="editLastName"><br>
+        </label>
+        <label class="fart">
+          Person's Birthday
+          <input type="date" id="editBirthDate"><br>
+        </label>
+        <label class="fart">
+          Parent One
+          <input type="text" id="editParent1" placeholder="Enter Parent 1"><br>
+        </label>
+        <label class="fart">
+          Parent Two
+          <input type="text" id="editParent2" placeholder="Enter Parent 2"><br>
+        </label>
+        <label class="fart">
+          Spouse
+          <input type="text" id="editSpouse"><br>
+        </label>
+        <label class="fart">
+          Bio
+          <input type="text" id="editBio" placeholder="Add a Bio"><br>
+        </label>
+        <label class="fart">
+          Image
+          <input type="text" id="editImage" placeholder="Add an Image"><br>
+        </label>
       </form>
 
     </div>

@@ -36,8 +36,6 @@ function setupAddPersonModal() {
   if (form) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      // TODO: hook this up to your real postPeople logic
-      alert("Add person functionality coming soon!");
       modal.style.display = "none";
     });
   }
