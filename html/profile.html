@@ -13,7 +13,7 @@
 
   <div class="profile-container">
     <h1 id="name"> Loading...</h1>
-    <p class="profileInfo"><strong>Birth Day:</strong><span id="birthDate"></span> </p>
+    <p class="profileInfo"><strong>Birth Day: </strong><span id="birthDate"></span> </p>
     <p class="profileInfo"><strong>Parents:</strong> <span id="parents"></span></p>
     <p class="profileInfo"><strong>Spouse:</strong> <span id="spouse"></span></p>
     <p class="profileInfo"><strong>Children:</strong> <span id="children"></span></p>
@@ -23,6 +23,22 @@
     <a href="/html/tree_page.html" class="button"> Back to Family Tree </a>
     <button id="deletePersonBtn" class="button"> Remove This Person </button>
     <button id="editPersonBtn" class="Button"> Edit This Person </button>
+  </div>
+
+  <div id="editPersonModal" class="modal hidden">
+    <div class="modal-content">
+      <button type="button" id="editCloseBtn">x</button>
+
+      <h2>Edit Person</h2>
+      <form id="editPersonForm">
+        <label>
+          First Name
+          <input type="text" id="firstName" placeholder="Spencer"><br>
+        </label>
+        <input type="text" id="lastName" placeholder="Colety"><br>
+      </form>
+
+    </div>
   </div>
   <script type="module" src="../js/profile.js"></script>
 </body>

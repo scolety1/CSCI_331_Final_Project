@@ -150,7 +150,7 @@ document
 
     // Example: go back to tree_page with an ?edit=personId param
     // so editPeople.js can pick it up.
-    window.location.href = `../html/tree_page?edit=${encodeURIComponent(
+    window.location.href = `../html/tree_page.html?edit=${encodeURIComponent(
       personId
     )}`;
   });
