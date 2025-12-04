@@ -12,6 +12,8 @@
 <body>
 
   <div class="profile-container">
+    <img id="profileImage" class="profile-image" alt="Profile picture" />
+
     <h1 id="name"> Loading...</h1>
     <p class="profileInfo"><strong>Birth Day: </strong><span id="birthDate"></span> </p>
     <p class="profileInfo"><strong>Parents:</strong> <span id="parents"></span></p>
@@ -22,21 +24,22 @@
 
     <a href="/html/tree_page.html" class="button"> Back to Family Tree </a>
     <button id="deletePersonBtn" class="button"> Remove This Person </button>
-    <button id="editPersonBtn" class="Button"> Edit This Person </button>
+    <button id="editPersonBtn" class="button"> Edit This Person </button>
   </div>
+
 
   <div id="editPersonModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
       <h2>Edit Person</h2>
-      <form id="editPersonForm">
+      <form id="editPersonForm" enctype="multipart/form-data">
         <label class="fart">
           First Name
           <input type="text" id="editFirstName"><br>
         </label>
         <label class="fart">
           Middle Initial
-          <input type="text" id="editMiddleInit"><br>
+          <input type="text" id="editMiddleInitial"><br>
         </label>
         <label class="fart">
           Last Name
@@ -60,12 +63,13 @@
         </label>
         <label class="fart">
           Bio
-          <input type="text" id="editBio" placeholder="Add a Bio"><br>
+          <textarea id="editBio" placeholder="Add a Bio" rows="4"></textarea><br>
         </label>
         <label class="fart">
-          Image
-          <input type="text" id="editImage" placeholder="Add an Image"><br>
+          Profile Image
+          <input type="file" id="editImageFile" accept="image/*"><br>
         </label>
+        <button type="submit">Save</button>
       </form>
 
     </div>

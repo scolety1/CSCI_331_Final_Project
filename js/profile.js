@@ -1,16 +1,26 @@
 // profile.js
-import { db } from "./firebase.js";
+import { db, storage } from "./firebase.js";
 import {
   doc,
   getDoc,
+  updateDoc,
   deleteDoc,
+  Timestamp,
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/11.9.0/firebase-storage.js";
+
 import { 
   toTitleFullName, 
   toTitle, 
   getChildren,
-  getAllPeople 
+  getAllPeople,
 } from "./helpers.js";
+
 
 let personId = null;
 
@@ -99,13 +109,24 @@ async function loadProfile() {
     document.getElementById("bio").textContent =
       data.bio || "No bio available.";
 
+    const profileImgEl = document.getElementById("profileImage");
+    if (profileImgEl) {
+        if (data.image) {
+            profileImgEl.src = data.image;
+            profileImgEl.style.display = "block";
+        } else {
+            // Hide the img tag if no image yet
+            profileImgEl.style.display = "none";
+        }
+    }
     // FUN FACT - fetch based on birthday
     if (data.birthDate && typeof data.birthDate.toDate === "function") {
-      const birthDate = data.birthDate.toDate();
-      await fetchFunFact(birthDate);
+        const birthDate = data.birthDate.toDate();
+        await fetchFunFact(birthDate);
     } else {
-      document.getElementById("funFact").textContent = "No birthdate available for fun fact.";
+        document.getElementById("funFact").textContent = "No birthdate available for fun fact.";
     }
+
 
     // --- FILL EDIT FORM IF IT EXISTS ---
     const editFirstName  = document.getElementById("editFirstName");
@@ -116,7 +137,6 @@ async function loadProfile() {
     const editParent2    = document.getElementById("editParent2");
     const editSpouse     = document.getElementById("editSpouse");
     const editBio        = document.getElementById("editBio");
-    const editImage      = document.getElementById("editImage");
 
     if (editFirstName) {
         editFirstName.value = toTitle(data.firstName || "");
@@ -150,10 +170,6 @@ async function loadProfile() {
         editBio.value = data.bio || "";
     }
 
-    if (editImage) {
-        editImage.value = data.image || "";
-    }
-
     // Birthdate: convert Firestore Timestamp to yyyy-mm-dd for <input type="date">
     if (editBirthDate && data.birthDate && typeof data.birthDate.toDate === "function") {
         const d = data.birthDate.toDate();
@@ -169,6 +185,110 @@ async function loadProfile() {
     document.getElementById("name").textContent =
       "Error loading profile.";
   }
+}
+
+
+// ... your existing code where personId is set in loadProfile ...
+
+const editForm = document.getElementById("editPersonForm");
+
+if (editForm) {
+  editForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!personId) {
+      console.error("No personId set for editing");
+      return;
+    }
+
+    // ----- GET & CLEAN INPUT VALUES (from EDIT fields) -----
+    const rawFirstName      = document.getElementById("editFirstName").value.trim();
+    const rawMiddleInitial  = document.getElementById("editMiddleInitial").value.trim();
+    const rawLastName       = document.getElementById("editLastName").value.trim();
+    const rawSpouse         = document.getElementById("editSpouse").value.trim();
+    const rawParent1        = document.getElementById("editParent1").value.trim();
+    const rawParent2        = document.getElementById("editParent2").value.trim();
+    const birthDateRaw      = document.getElementById("editBirthDate").value; // "YYYY-MM-DD"
+    const rawBio            = document.getElementById("editBio").value.trim();
+    const imageFileInput    = document.getElementById("editImageFile");
+    const imageFile         = imageFileInput && imageFileInput.files[0];
+
+    const firstName     = rawFirstName.toLowerCase();
+    const middleInitial = rawMiddleInitial.toLowerCase();
+    const lastName      = rawLastName.toLowerCase();
+
+    const spouseRaw = rawSpouse.toLowerCase();
+    const parent1   = rawParent1.toLowerCase();
+    const parent2   = rawParent2.toLowerCase();
+
+    let spouseFirstName = "";
+    let spouseLastName  = "";
+
+    if (spouseRaw) {
+      const parts = spouseRaw.split(" ");
+      spouseFirstName = parts[0] || "";
+      spouseLastName  = parts.slice(1).join(" ") || "";
+    }
+
+    // Birthdate → Timestamp
+    let birthDate = null;
+    if (birthDateRaw) {
+      const [yearStr, monthStr, dayStr] = birthDateRaw.split("-");
+      const year  = Number(yearStr);
+      const month = Number(monthStr) - 1; // 0-based
+      const day   = Number(dayStr);
+
+      const jsDate = new Date(year, month, day);
+      birthDate = Timestamp.fromDate(jsDate);
+    }
+
+        // ----- OPTIONAL: UPLOAD IMAGE FILE TO FIREBASE STORAGE -----
+    let imageUrl = null;
+
+    if (imageFile) {
+        try {
+            const imageRef = ref(storage, `people/${personId}/${imageFile.name}`);
+            await uploadBytes(imageRef, imageFile);
+            imageUrl = await getDownloadURL(imageRef);
+        } catch (err) {
+            console.error("Error uploading image:", err);
+            alert("Image upload failed, but other changes will still be saved.");
+        }
+    }
+
+    // ----- BUILD PERSON OBJECT (same pattern as add) -----
+    const personData = {
+      firstName,
+      lastName,
+    };
+
+    if (middleInitial)      personData.middleInitial    = middleInitial;
+    if (birthDate)          personData.birthDate        = birthDate;
+    if (parent1)            personData.parent1          = parent1;
+    if (parent2)            personData.parent2          = parent2;
+    if (spouseFirstName)    personData.spouseFirstName  = spouseFirstName;
+    if (spouseLastName)     personData.spouseLastName   = spouseLastName;
+    if (rawBio)             personData.bio              = rawBio;
+    if (imageUrl)           personData.image = imageUrl;
+
+    // ----- UPDATE EXISTING DOC IN FIRESTORE -----
+    try {
+      const personRef = doc(db, "example", personId);
+      await updateDoc(personRef, personData);
+
+      alert("Person updated! Reloading profile...");
+      // optional: close modal
+      const modal = document.getElementById("editPersonModal");
+      if (modal) modal.style.display = "none";
+
+      // Reload page to see updated profile info
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating person:", error);
+      alert("Something went wrong while saving changes.");
+    }
+  });
+} else {
+  console.log("No #editPersonForm on this page, skipping edit setup.");
 }
 
 // Fetch fun fact from Numbers API based on birthday
@@ -227,15 +347,6 @@ function setupEditPersonModal() {
       modal.style.display = "none";
     }
   });
-
-  // Just prevent default on submit for now
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      // later: send updated values to Firestore
-      modal.style.display = "none";
-    });
-  }
 }
 
 

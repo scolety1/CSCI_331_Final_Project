@@ -1,6 +1,5 @@
 import "./helpers.js";
 import "./postPeople.js";
-import "./editPeople.js";
 import "./tree.js";
 import "./search.js";
 
