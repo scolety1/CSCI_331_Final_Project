@@ -19,56 +19,166 @@
         </nav>
     </header>
 
-
     <main>
+        <!-- HERO / WELCOME -->
         <section class="welcome-section">
             <h2>Welcome to the Family Tree App</h2>
-            <p>Create and manage your family tree with ease. Add family members, view relationships, and explore your family history.</p>
+            <p>
+                Create and manage your own family tree, or join a tree that someone in your family has already started.
+                Use a simple access code to keep each family’s tree private and separate.
+            </p>
         </section>
 
+        <!-- MAIN ACTIONS: CREATE / JOIN / VIEW EXAMPLE -->
+        <section class="actions-section">
+            <h2>Get Started</h2>
+
+            <div class="actions-grid">
+                <!-- Create Tree -->
+                <article class="action-card">
+                    <h3>Create a New Family Tree</h3>
+                    <p>
+                        Starting from scratch? Create a new family tree, get a unique access code, and share it with
+                        your family so they can add and explore members together.
+                    </p>
+                    <button id="createTreeBtn" class="button">
+                        Create Family Tree
+                    </button>
+                </article>
+
+                <!-- Join Tree -->
+                <article class="action-card">
+                    <h3>Join an Existing Tree</h3>
+                    <p>
+                        Someone already made a tree for your family? Enter the access code they shared with you to
+                        jump straight into your family’s tree.
+                    </p>
+                    <button id="joinTreeBtn" class="button button-secondary">
+                        Join with Code
+                    </button>
+                </article>
+
+                <!-- View Example Tree -->
+                <article class="action-card">
+                    <h3>View Example Tree</h3>
+                    <p>
+                        Curious what this looks like? Explore our example family tree to see how generations,
+                        spouses, and children are displayed.
+                    </p>
+                    <!-- TODO: when you have an example familyId, update this href to include ?familyId=... -->
+                    <a id="exampleTreeLink" href="../html/tree_page.html" class="button button-ghost">
+                        View Example Tree
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- FORMS: these will be wired up with Firestore in JS -->
+        <section class="forms-section">
+            <!-- Create Tree Form -->
+            <div id="createTreeFormCard" class="form-card">
+                <h3>Create a New Family Tree</h3>
+                <p>Choose a name for your family tree. You’ll receive an access code to share with your relatives.</p>
+
+                <form id="createFamilyForm">
+                    <label for="familyName">Family Tree Name</label>
+                    <input
+                        type="text"
+                        id="familyName"
+                        name="familyName"
+                        placeholder="e.g., Colety Family Tree"
+                        required
+                    />
+
+                    <label for="familyDescription">Description (optional)</label>
+                    <textarea
+                        id="familyDescription"
+                        name="familyDescription"
+                        rows="3"
+                        placeholder="A short note about this branch of the family..."
+                    ></textarea>
+
+                    <button type="submit" class="button">Create Tree</button>
+                </form>
+            </div>
+
+            <!-- Join Tree Form -->
+            <div id="joinTreeFormCard" class="form-card">
+                <h3>Join an Existing Family Tree</h3>
+                <p>Enter the access code that was shared with you to view and edit your family’s tree.</p>
+
+                <form id="joinFamilyForm">
+                    <label for="joinCode">Access Code</label>
+                    <input
+                        type="text"
+                        id="joinCode"
+                        name="joinCode"
+                        placeholder="e.g., 7F3KQ9"
+                        maxlength="12"
+                        required
+                    />
+
+                    <button type="submit" class="button button-secondary">Join Tree</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- HOW-TO SECTION (updated to match multi-tree setup) -->
         <section class="instructions-section">
-            <h2>How to Use the Family Tree</h2>
+            <h2>How It Works</h2>
             
             <div class="instruction-card">
-                <h3>1. View Your Family Tree</h3>
-                <p>Click on <strong>"Family Tree"</strong> in the navigation menu to see your family tree organized by generations. The tree automatically arranges family members based on their relationships.</p>
+                <h3>1. Create or Join a Tree</h3>
+                <p>
+                    From this home page, either <strong>create a new tree</strong> for your family
+                    or <strong>join an existing tree</strong> with an access code.
+                    Once you’re in a tree, everything you see will be specific to that family.
+                </p>
+            </div>
+
+            <div class="instruction-card">
+                <h3>2. View Your Family Tree</h3>
+                <p>
+                    On the <strong>"Family Tree"</strong> page, you’ll see all family members
+                    in this tree organized by generation, with spouses and siblings grouped together.
+                </p>
                 <a href="../html/tree_page.html" class="button">Go to Family Tree</a>
             </div>
 
             <div class="instruction-card">
-                <h3>2. Add a Family Member</h3>
-                <p>On the Family Tree page, click the <strong>green "+" button</strong> in the bottom right corner to add a new family member.</p>
+                <h3>3. Add a Family Member</h3>
+                <p>On the Family Tree page, click the <strong>green "+" button</strong>
+                   in the bottom right corner to add a new family member to the current tree.</p>
                 <ul class="instruction-list">
                     <li><strong>Required:</strong> First Name and Last Name</li>
                     <li><strong>Optional:</strong> Middle Initial, Birth Date, Parents, Spouse</li>
-                    <li><strong>Tip:</strong> Enter parent names as "First Last" (e.g., "John Smith")</li>
-                    <li><strong>Tip:</strong> Enter spouse name as "First Last" (e.g., "Jane Doe")</li>
+                    <li><strong>Tip:</strong> Parent names as "First Last" (e.g., "John Smith")</li>
+                    <li><strong>Tip:</strong> Spouse name as "First Last" (e.g., "Jane Doe")</li>
                 </ul>
             </div>
 
             <div class="instruction-card">
-                <h3>3. View a Person's Profile</h3>
-                <p>Click on any person's card in the family tree to view their detailed profile page, including:</p>
+                <h3>4. View & Edit Profiles</h3>
+                <p>
+                    Click on any person’s card in the family tree to see their profile, including:
+                </p>
                 <ul class="instruction-list">
                     <li>Birth date</li>
                     <li>Parents and children</li>
                     <li>Spouse information</li>
                     <li>Historical fun fact based on their birthday</li>
                 </ul>
-            </div>
-
-            <div class="instruction-card">
-                <h3>4. Edit or Remove a Person</h3>
-                <p>On a person's profile page, you can:</p>
-                <ul class="instruction-list">
-                    <li>Click <strong>"Edit This Person"</strong> to modify their information</li>
-                    <li>Click <strong>"Remove This Person"</strong> to delete them from the tree</li>
-                </ul>
+                <p>
+                    From the profile page, you can <strong>edit</strong> or <strong>remove</strong> that person.
+                </p>
             </div>
 
             <div class="instruction-card">
                 <h3>5. Search for Family Members (WIP)</h3>
-                <p>Use the <strong>"Search"</strong> page to quickly find family members by name.</p>
+                <p>
+                    Use the <strong>"Search"</strong> page to quickly find family members by name
+                    within the current family tree.
+                </p>
                 <a href="/html/search_page.html" class="button">Go to Search</a>
             </div>
         </section>
@@ -91,7 +201,96 @@
 
         .welcome-section p {
             color: #e0e0e0;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
+        }
+
+        .actions-section {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 10px 20px;
+        }
+
+        .actions-section h2 {
+            color: #f9fafb;
+            margin-bottom: 20px;
+            font-size: 1.9rem;
+            text-align: center;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .action-card {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            border-left: 4px solid #4e7cb1;
+        }
+
+        .action-card h3 {
+            color: #f9fafb;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .action-card p {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .forms-section {
+            max-width: 1000px;
+            margin: 20px auto 40px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .form-card {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px 22px;
+        }
+
+        .form-card h3 {
+            color: #f9fafb;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .form-card p {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .form-card label {
+            display: block;
+            color: #f9fafb;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .form-card input,
+        .form-card textarea {
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid #4e7cb1;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            background-color: rgba(15, 23, 42, 0.8);
+            color: #e0e0e0;
+        }
+
+        .form-card input::placeholder,
+        .form-card textarea::placeholder {
+            color: #9ca3af;
         }
 
         .instructions-section {
@@ -137,39 +336,30 @@
             margin-bottom: 8px;
         }
 
-        .tips-section {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 30px;
-            background-color: rgba(78, 124, 177, 0.2);
-            border-radius: 10px;
-        }
-
-        .tips-section h2 {
+        .button {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: none;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: #4e7cb1;
             color: #f9fafb;
-            margin-bottom: 20px;
         }
 
-        .tips-list {
-            color: #e0e0e0;
-            text-align: left;
-            line-height: 2;
-            list-style: none;
-            padding-left: 0;
+        .button-secondary {
+            background-color: #1f2937;
+            border: 1px solid #4e7cb1;
         }
 
-        .tips-list li {
-            margin-bottom: 12px;
-            padding-left: 30px;
-            position: relative;
+        .button-ghost {
+            background-color: transparent;
+            border: 1px solid #4e7cb1;
         }
 
-        .tips-list li::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: #4e7cb1;
-            font-size: 1.5rem;
+        .button:hover {
+            opacity: 0.9;
         }
     </style>
         

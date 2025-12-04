@@ -2,6 +2,7 @@ import "./helpers.js";
 import "./postPeople.js";
 import "./tree.js";
 import "./search.js";
+import "./home.js";
 
 // Highlight active navigation link based on current page
 document.addEventListener('DOMContentLoaded', () => {

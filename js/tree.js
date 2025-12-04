@@ -1,3 +1,9 @@
+import { db } from "./firebase.js";
+import {
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+
 import {
   getAllPeople,
   groupByGeneration,
@@ -135,6 +141,41 @@ function renderGeneration(genNumber, peopleInGen, treeLayout) {
 /* ---------------------------
    MAIN LOAD FUNCTION
 --------------------------- */
+function getCurrentFamilyId() {
+  const params = new URLSearchParams(window.location.search);
+  const familyId = params.get("familyId");
+  return familyId || null;
+}
+
+async function updateTreeTitle(familyId) {
+  const titleEl = document.getElementById("treeTitle");
+  if (!titleEl) return;
+
+  // Example tree: no familyId → keep default title
+  if (!familyId) {
+    titleEl.textContent = "Example Family Tree";
+    return;
+  }
+
+  try {
+    const familyRef = doc(db, "families", familyId);
+    const familySnap = await getDoc(familyRef);
+
+    if (!familySnap.exists()) {
+      titleEl.textContent = "Family Tree";
+      return;
+    }
+
+    const data = familySnap.data();
+    titleEl.textContent = data.name || "Family Tree";
+
+    // Optional: update browser tab title as well
+    document.title = data.name || "Our Family Tree";
+  } catch (err) {
+    console.error("Error loading family name:", err);
+    titleEl.textContent = "Family Tree";
+  }
+}
 
 async function loadFamilyTree() {
   const treeLayout = document.getElementById("tree-layout");
@@ -143,11 +184,25 @@ async function loadFamilyTree() {
     return;
   }
 
+  const familyId = getCurrentFamilyId();
+
+  // Update the title (family name or example)
+  await updateTreeTitle(familyId);
+    // Keep the nav "Family Tree" link locked on this family if possible
+  if (familyId) {
+    const navTreeLink = document.querySelector('nav a[href="tree_page.html"]');
+    if (navTreeLink) {
+      navTreeLink.href = `tree_page.html?familyId=${familyId}`;
+    }
+  }
+
   treeLayout.innerHTML = "<p>Loading family tree...</p>";
 
   try {
-    const allPeople = await getAllPeople();
-    console.log("All people from Firestore:", allPeople);
+    // If familyId exists, this will pull from "people" for that family.
+    // If not, it falls back to your static "example" collection.
+    const allPeople = await getAllPeople(familyId);
+    console.log("All people from Firestore:", allPeople, "for familyId:", familyId);
 
     if (!allPeople || allPeople.length === 0) {
       treeLayout.innerHTML = "<p>No family members found in the database.</p>";
@@ -175,6 +230,7 @@ async function loadFamilyTree() {
     treeLayout.innerHTML = "<p>Error loading family tree.</p>";
   }
 }
+
 
 /* ---------------------------
    INIT

@@ -40,7 +40,20 @@ export function toTitleFullName(firstName, lastName) {
 ----------------------------------- */
 
 // Get all people (used in loadFamilyTree, etc.)
-export async function getAllPeople() {
+export async function getAllPeople(familyId = null) {
+  // If we have a familyId, load the real people for that family from "people"
+  if (familyId) {
+    const peopleRef = collection(db, "people");
+    const qPeople = query(peopleRef, where("familyId", "==", familyId));
+    const snapshot = await getDocs(qPeople);
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  }
+
+  // Otherwise, fall back to the static example tree collection
   const snapshot = await getDocs(collection(db, "example"));
   return snapshot.docs.map(doc => ({
     id: doc.id,
@@ -48,27 +61,34 @@ export async function getAllPeople() {
   }));
 }
 
-// Find a single person by normalized full name
-export async function findPersonByFullName(firstName, lastName) {
+
+export async function findPersonByFullName(firstName, lastName, familyId = null) {
   const cleanFirst = normalizeNamePart(firstName);
   const cleanLast = normalizeNamePart(lastName);
 
   if (!cleanFirst || !cleanLast) return null;
 
-  const peopleRef = collection(db, "example");
-  const q = query(
-    peopleRef,
-    where("firstName", "==", cleanFirst),
-    where("lastName", "==", cleanLast),
-    limit(1)
-  );
+  const collectionName = familyId ? "people" : "example";
+  const peopleRef = collection(db, collectionName);
 
-  const snap = await getDocs(q);
+  const constraints = [
+    where("firstName", "==", cleanFirst),
+    where("lastName", "==", cleanLast)
+  ];
+
+  if (familyId) {
+    constraints.push(where("familyId", "==", familyId));
+  }
+
+  const qPeople = query(peopleRef, ...constraints, limit(1));
+
+  const snap = await getDocs(qPeople);
   if (snap.empty) return null;
 
-  const doc = snap.docs[0];
-  return { id: doc.id, ...doc.data() };
+  const docSnap = snap.docs[0];
+  return { id: docSnap.id, ...docSnap.data() };
 }
+
 
 /* -----------------------------------
    RELATIONSHIP HELPERS
