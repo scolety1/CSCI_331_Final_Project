@@ -561,3 +561,18 @@ export function validatePersonData(person) {
   if (!person.firstName || !person.lastName) return false;
   return true;
 }
+
+export function dedupeByFullName(people) {
+  const seen = new Set();
+  const result = [];
+
+  people.forEach(p => {
+    const full = buildFullName(p.firstName, p.lastName);
+    if (!full) return;
+    if (seen.has(full)) return;
+    seen.add(full);
+    result.push(p);
+  });
+
+  return result;
+}

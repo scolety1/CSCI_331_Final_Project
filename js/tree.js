@@ -12,7 +12,8 @@ import {
   toTitleFullName,
   getCurrentFamilyId as getFamilyIdFromHelper,
   buildFullName,
-  areSplitUpCoParents
+  areSplitUpCoParents,
+  dedupeByFullName
 } from "./helpers.js";
 
 let lastRenderedPeople = [];
@@ -185,13 +186,17 @@ async function loadFamilyTree() {
   const layout = document.getElementById("tree-layout");
   const familyId = getFamilyIdFromHelper();
 
-  const people = await getAllPeople(familyId);
+  let people = await getAllPeople(familyId);
+
+  people = dedupeByFullName(people);
+
   const genMap = groupByGeneration(people);
   const genKeys = sortGenerationKeys(genMap);
 
   layout.innerHTML = "";
 
   genKeys.forEach(gen => {
+    const peopleInGen = dedupeByFullName(genMap.get(gen) || []);
     renderGeneration(gen, genMap.get(gen), layout, familyId, people); // 👈 pass people
   });
 
