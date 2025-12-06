@@ -1,76 +1,212 @@
+/* ===== JOIN CODE DISPLAY ===== */
+
+.join-code-display {
+    max-width: 1200px;
+    margin: 20px auto 30px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #4e7cb1 0%, #395a8f 100%);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    color: #f9fafb;
+}
+
+.join-code-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.join-code-label {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.join-code-value {
+    font-size: 1.3rem;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+    user-select: none;
+}
+
+.join-code-value:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.join-code-hint {
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin: 0;
+    margin-top: 4px;
+}
+
+/* ===== FAMILY TREE PAGE — CARD LAYOUT ===== */
+
 .tree-layout {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 60px;
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 40px;
-  background: #f9fafb;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  overflow-x: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px 40px;
+    border-radius: 16px;
+    background-color: #f9fafb;
+    color: #111827;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+    overflow-x: auto;   /* allow horizontal scroll */
+    overflow-y: auto;   /* just in case it gets tall */
 }
 
-.generation {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.generation-row {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  gap: 40px;
-  min-width: 100%;
-}
-
-.person-card {
-  background: white;
-  border-radius: 12px;
-  padding: 14px 18px;
-  min-width: 150px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-  border: 1px solid #ddd;
-  text-align: center;
-}
-
-.person-card h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.person-card p {
-  margin: 3px 0;
-  font-size: 0.85rem;
-}
-
-.spouse-pair {
-  display: flex;
-  gap: 12px;
-  position: relative;
-}
-
-.spouse-pair::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 32px;
-  border-top: 2px solid #2563eb;
-  transform: translate(-50%, -50%);
-}
-
+/* SVG layer for parent→child connectors */
 .tree-lines {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .tree-lines path {
-  fill: none;
-  stroke: #2563eb;
-  stroke-width: 2;
+    fill: none;
+    stroke: rgba(30, 64, 175, 0.9); /* deep navy for parent-child lines */
+    stroke-width: 2;
+}
+
+/* One generation block */
+.generation {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 0;
+}
+
+/* Title above each generation row */
+.generation-title {
+    display: none !important;
+}
+
+/* Row that actually holds the cards / spouse pairs */
+.generation-row {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;      /* 🔥 keep everyone on the same line */
+    gap: 24px;
+    justify-content: center;
+    z-index: 1; /* keep above SVG lines */
+}
+
+/* ===== SPOUSE / DIVORCED PAIRS ===== */
+
+/* Married / partner pair: keep cards side-by-side */
+.spouse-pair {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+}
+
+/* Small connector between spouses (short bar) */
+.spouse-pair::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 0;
+    border-top: 2px solid rgba(249, 115, 22, 0.9); /* warm color for spouse link */
+    transform: translate(-50%, -50%);
+    z-index: 0;
+}
+
+/* Divorced pair: visually separated but still “linked” */
+.divorced-pair {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+}
+
+.divorced-pair::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 0;
+    border-top: 2px dashed rgba(239, 68, 68, 0.85); /* red dashed line */
+    transform: translate(-50%, -50%);
+    z-index: 0;
+}
+
+/* ===== PERSON CARDS ===== */
+
+.person-card {
+    position: relative;
+    z-index: 1; /* sit above connector lines */
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 16px 18px 18px;
+    min-width: 170px;
+    max-width: 220px;
+    text-align: left;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+    border: 1px solid #d1d5db;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.person-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 35px rgba(15, 23, 42, 0.2);
+    border-color: #2563eb;
+}
+
+/* Name line */
+.person-card h3,
+.person-card .name {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #111827;
+    margin: 0 0 6px 0;
+}
+
+/* Secondary text (dates, notes, etc.) */
+.person-card p,
+.person-card .meta {
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 2px 0;
+}
+
+/* Debug generation text if you keep .debug-gen */
+.person-card .debug-gen {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+/* Example of a subtle tag (e.g., “Divorced”, “Spouse”, etc.) */
+.person-card .tag {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background-color: #eff6ff;
+    color: #1d4ed8;
 }

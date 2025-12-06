@@ -210,3 +210,7 @@ p {
 .close:hover {
     color: black;
 }
+
+.tree-layout a {
+    text-decoration: none;
+}
