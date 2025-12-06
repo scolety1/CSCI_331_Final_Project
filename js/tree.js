@@ -76,7 +76,7 @@ function createPersonCard(person, familyId = null) {
   link.href = profileUrl;
   link.style.textDecoration = "none";
   link.style.color = "inherit";
-  link.dataset.personId = person.id; // used for connectors
+  link.dataset.personId = person.id; // used for possible future connectors
 
   const card = document.createElement("div");
   card.className = "person-card";
@@ -92,10 +92,156 @@ function createPersonCard(person, familyId = null) {
 }
 
 /* ---------------------------
-   RENDER ONE GENERATION ROW
+   FAMILY BLOCK LAYOUT HELPERS
 --------------------------- */
 
-function renderGeneration(genNumber, peopleInGen, treeLayout, familyId = null) {
+/**
+ * Build a map: generation -> array of family blocks.
+ *
+ * Family block:
+ * {
+ *   key: string,
+ *   parents: Person[],  // one or two
+ *   children: Person[], // 0+
+ *   generation: number  // parents' generation
+ * }
+ */
+function buildFamilyBlocks(allPeople) {
+  const blocksByKey = new Map();
+
+  // helper: name -> person
+  const nameToPerson = new Map();
+  allPeople.forEach((p) => {
+    const full = buildFullName(p.firstName, p.lastName);
+    if (full) nameToPerson.set(full, p);
+  });
+
+  // 1) Create blocks for each parent-set that actually has children
+  allPeople.forEach((child) => {
+    const parents = [child.parent1, child.parent2].filter(Boolean);
+    if (parents.length === 0) return;
+
+    const sortedParents = [...parents].sort();
+    const key = "P:" + sortedParents.join("|");
+
+    if (!blocksByKey.has(key)) {
+      const parentPersons = sortedParents
+        .map((name) => nameToPerson.get(name))
+        .filter(Boolean);
+
+      if (parentPersons.length === 0) {
+        // parents not in dataset – nothing good to render
+        return;
+      }
+
+      const gen = parentPersons.reduce(
+        (g, p) =>
+          Math.max(
+            g,
+            typeof p.generation === "number" ? p.generation : 1
+          ),
+        1
+      );
+
+      blocksByKey.set(key, {
+        key,
+        parents: parentPersons,
+        children: [],
+        generation: gen,
+      });
+    }
+
+    const block = blocksByKey.get(key);
+    if (!block.children.some((c) => c.id === child.id)) {
+      block.children.push(child);
+    }
+  });
+
+  // helper: does this person already appear in any existing block
+  function personAppears(p) {
+    for (const block of blocksByKey.values()) {
+      if (
+        block.parents.some((pp) => pp.id === p.id) ||
+        block.children.some((c) => c.id === p.id)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // 2) Add spouse-only or single-person blocks for people
+  //    who don't appear in any parent/child block yet
+  allPeople.forEach((p) => {
+    if (personAppears(p)) return;
+
+    // Try to find their spouse who also doesn't appear anywhere yet
+    const spouse = allPeople.find(
+      (other) =>
+        other.id !== p.id &&
+        areSpouses(p, other) &&
+        !personAppears(other)
+    );
+
+    if (spouse) {
+      const pairKey = "S:" + [p.id, spouse.id].sort().join("|");
+      if (!blocksByKey.has(pairKey)) {
+        const gen = Math.max(
+          typeof p.generation === "number" ? p.generation : 1,
+          typeof spouse.generation === "number" ? spouse.generation : 1
+        );
+        blocksByKey.set(pairKey, {
+          key: pairKey,
+          parents: [p, spouse],
+          children: [],
+          generation: gen,
+        });
+      }
+    } else {
+      const singleKey = "I:" + p.id;
+      if (!blocksByKey.has(singleKey)) {
+        const gen = typeof p.generation === "number" ? p.generation : 1;
+        blocksByKey.set(singleKey, {
+          key: singleKey,
+          parents: [p],
+          children: [],
+          generation: gen,
+        });
+      }
+    }
+  });
+
+  // 3) Group blocks by generation
+  const genMap = new Map();
+
+  blocksByKey.forEach((block) => {
+    const g = block.generation || 1;
+    if (!genMap.has(g)) genMap.set(g, []);
+    genMap.get(g).push(block);
+  });
+
+  // 4) Within each generation, sort blocks by BFS index of their first parent
+  genMap.forEach((blocks) => {
+    blocks.sort((a, b) => {
+      const aIdx = Math.min(
+        ...a.parents.map((p) => (p._bfsIndex != null ? p._bfsIndex : 0))
+      );
+      const bIdx = Math.min(
+        ...b.parents.map((p) => (p._bfsIndex != null ? p._bfsIndex : 0))
+      );
+      return aIdx - bIdx;
+    });
+  });
+
+  return genMap;
+}
+
+/* ---------------------------
+   RENDER ONE GENERATION ROW
+   (now: rows of FAMILY BLOCKS)
+--------------------------- */
+
+function renderGeneration(genNumber, familyBlocks, treeLayout, familyId = null) {
   const genContainer = document.createElement("div");
   genContainer.className = "generation";
   genContainer.id = `gen-${genNumber}`;
@@ -108,34 +254,44 @@ function renderGeneration(genNumber, peopleInGen, treeLayout, familyId = null) {
   const row = document.createElement("div");
   row.className = "generation-row";
 
-  const usedIds = new Set();
+  familyBlocks.forEach((block) => {
+    const familyEl = document.createElement("div");
+    familyEl.className = "family-block";
 
-  peopleInGen.forEach((person) => {
-    if (usedIds.has(person.id)) return;
+    // --- parents row ---
+    const parentsRow = document.createElement("div");
+    parentsRow.className = "family-parents-row";
 
-    const spouse = peopleInGen.find(
-      (p) => !usedIds.has(p.id) && areSpouses(person, p)
-    );
-
-    if (spouse) {
-      const pairContainer = document.createElement("div");
-      pairContainer.className = "spouse-pair";
-
-      const personCard = createPersonCard(person, familyId);
-      const spouseCard = createPersonCard(spouse, familyId);
-
-      pairContainer.appendChild(personCard);
-      pairContainer.appendChild(spouseCard);
-
-      row.appendChild(pairContainer);
-
-      usedIds.add(person.id);
-      usedIds.add(spouse.id);
-    } else {
-      const card = createPersonCard(person, familyId);
-      row.appendChild(card);
-      usedIds.add(person.id);
+    if (block.parents.length === 2) {
+      // keep your nice spouse-pair styling
+      const pair = document.createElement("div");
+      pair.className = "spouse-pair";
+      pair.appendChild(createPersonCard(block.parents[0], familyId));
+      pair.appendChild(createPersonCard(block.parents[1], familyId));
+      parentsRow.appendChild(pair);
+    } else if (block.parents.length === 1) {
+      parentsRow.appendChild(createPersonCard(block.parents[0], familyId));
     }
+
+    familyEl.appendChild(parentsRow);
+
+    // --- children row (if any) ---
+    if (block.children && block.children.length > 0) {
+      const connector = document.createElement("div");
+      connector.className = "family-connector";
+      familyEl.appendChild(connector);
+
+      const childrenRow = document.createElement("div");
+      childrenRow.className = "family-children-row";
+
+      block.children.forEach((child) => {
+        childrenRow.appendChild(createPersonCard(child, familyId));
+      });
+
+      familyEl.appendChild(childrenRow);
+    }
+
+    row.appendChild(familyEl);
   });
 
   genContainer.appendChild(row);
@@ -143,153 +299,16 @@ function renderGeneration(genNumber, peopleInGen, treeLayout, familyId = null) {
 }
 
 /* ---------------------------
-   PARENT → CHILD CONNECTOR LINES
+   PARENT → CHILD CONNECTOR LINES (DISABLED)
 --------------------------- */
 
+/**
+ * We used to draw big SVG lines across generations.
+ * The new layout keeps connections *inside* each family block via CSS,
+ * so this is intentionally a no-op now.
+ */
 function drawParentChildLines(people) {
-  const treeLayout = document.getElementById("tree-layout");
-  if (!treeLayout) return;
-
-  const oldSvg = document.getElementById("tree-lines-svg");
-  if (oldSvg && oldSvg.parentNode) {
-    oldSvg.parentNode.removeChild(oldSvg);
-  }
-
-  if (!people || people.length === 0) return;
-
-  const containerRect = treeLayout.getBoundingClientRect();
-  const scrollLeft = treeLayout.scrollLeft;
-  const scrollTop = treeLayout.scrollTop;
-
-  const width = treeLayout.scrollWidth || containerRect.width;
-  const height = treeLayout.scrollHeight || containerRect.height;
-
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("id", "tree-lines-svg");
-  svg.setAttribute("class", "tree-lines");
-  svg.setAttribute("width", width);
-  svg.setAttribute("height", height);
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-
-  // Map personId -> position info
-  const elMap = new Map();
-  const allEls = treeLayout.querySelectorAll("[data-person-id]");
-  allEls.forEach((el) => {
-    const id = el.dataset.personId;
-    if (!id) return;
-    const rect = el.getBoundingClientRect();
-
-    const centerX =
-      rect.left - containerRect.left + scrollLeft + rect.width / 2;
-    const topY = rect.top - containerRect.top + scrollTop;
-    const bottomY = rect.bottom - containerRect.top + scrollTop;
-
-    elMap.set(id, {
-      el,
-      rect,
-      centerX,
-      topY,
-      bottomY,
-    });
-  });
-
-  // Build fullName -> person map
-  const nameToPerson = new Map();
-  people.forEach((p) => {
-    const full = buildFullName(p.firstName, p.lastName);
-    if (full) nameToPerson.set(full, p);
-  });
-
-  // Group children by their parent pair
-  const parentGroupMap = new Map();
-
-  people.forEach((child) => {
-    const p1 = child.parent1 || "";
-    const p2 = child.parent2 || "";
-    if (!p1 && !p2) return;
-
-    let key;
-    if (p1 && p2) {
-      key = [p1, p2].sort().join("|");
-    } else {
-      key = p1 || p2;
-    }
-
-    if (!parentGroupMap.has(key)) {
-      parentGroupMap.set(key, {
-        parentNames: [p1 || null, p2 || null],
-        children: [],
-      });
-    }
-    parentGroupMap.get(key).children.push(child);
-  });
-
-  parentGroupMap.forEach((group) => {
-    const [p1Name, p2Name] = group.parentNames;
-
-    const parentPersons = [];
-    if (p1Name && nameToPerson.has(p1Name)) {
-      parentPersons.push(nameToPerson.get(p1Name));
-    }
-    if (p2Name && nameToPerson.has(p2Name)) {
-      const p2Person = nameToPerson.get(p2Name);
-      if (!parentPersons.includes(p2Person)) {
-        parentPersons.push(p2Person);
-      }
-    }
-
-    if (parentPersons.length === 0) return;
-
-    const parentInfos = parentPersons
-      .map((p) => elMap.get(p.id))
-      .filter(Boolean);
-    if (parentInfos.length === 0) return;
-
-    const childInfos = group.children
-      .map((c) => elMap.get(c.id))
-      .filter(Boolean);
-    if (childInfos.length === 0) return;
-
-    const parentXs = parentInfos.map((pi) => pi.centerX);
-    const parentYs = parentInfos.map((pi) => pi.bottomY + 4);
-
-    const childXs = childInfos.map((ci) => ci.centerX);
-    const childYs = childInfos.map((ci) => ci.topY - 4);
-
-    const allXs = parentXs.concat(childXs);
-    const minX = Math.min(...allXs);
-    const maxX = Math.max(...allXs);
-
-    const minParentY = Math.min(...parentYs);
-    const maxChildY = Math.max(...childYs);
-    const midY = (minParentY + maxChildY) / 2;
-
-    // Horizontal connector bar across this family
-    const horiz = document.createElementNS(svgNS, "path");
-    horiz.setAttribute("d", `M ${minX} ${midY} L ${maxX} ${midY}`);
-    svg.appendChild(horiz);
-
-    // Vertical from each parent down to the bar
-    parentInfos.forEach((pi, idx) => {
-      const py = parentYs[idx];
-      const px = parentXs[idx];
-      const path = document.createElementNS(svgNS, "path");
-      path.setAttribute("d", `M ${px} ${py} L ${px} ${midY}`);
-      svg.appendChild(path);
-    });
-
-    // Vertical from bar down/up to each child
-    childInfos.forEach((ci, idx) => {
-      const cy = childYs[idx];
-      const cx = childXs[idx];
-      const path = document.createElementNS(svgNS, "path");
-      path.setAttribute("d", `M ${cx} ${midY} L ${cx} ${cy}`);
-      svg.appendChild(path);
-    });
-  });
-
-  treeLayout.prepend(svg);
+  return;
 }
 
 /* ---------------------------
@@ -304,7 +323,7 @@ async function updateTreeTitle(familyId) {
   const titleEl = document.getElementById("treeTitle");
   const joinCodeDisplay = document.getElementById("joinCodeDisplay");
   const joinCodeValue = document.getElementById("joinCodeValue");
-  
+
   if (!titleEl) return;
 
   if (!familyId) {
@@ -330,7 +349,7 @@ async function updateTreeTitle(familyId) {
     const data = familySnap.data();
     titleEl.textContent = data.name || "Family Tree";
     document.title = data.name || "Our Family Tree";
-    
+
     if (joinCodeDisplay && joinCodeValue && data.joinCode) {
       joinCodeValue.textContent = data.joinCode;
       joinCodeDisplay.style.display = "block";
@@ -375,23 +394,26 @@ async function loadFamilyTree() {
       return;
     }
 
-    const genMap = groupByGeneration(allPeople);
-    const genKeys = sortGenerationKeys(genMap);
+    // This assigns .generation and ._bfsIndex on each person
+    const genMapForPeople = groupByGeneration(allPeople);
+    console.log("Generation map (people):", genMapForPeople);
 
-    console.log("Generation keys:", genKeys);
-    console.log("Generation map:", genMap);
+    // Now build family blocks based on those generations
+    const familyGenMap = buildFamilyBlocks(allPeople);
+    const genKeys = sortGenerationKeys(familyGenMap);
+
+    console.log("Family generation keys:", genKeys);
+    console.log("Family generation map:", familyGenMap);
 
     treeLayout.innerHTML = "";
 
     genKeys.forEach((genNumber) => {
-      const peopleInGen = genMap.get(genNumber) || [];
-      console.log(`Generation ${genNumber} people:`, peopleInGen);
-
-      renderGeneration(genNumber, peopleInGen, treeLayout, familyId);
+      const blocksInGen = familyGenMap.get(genNumber) || [];
+      renderGeneration(genNumber, blocksInGen, treeLayout, familyId);
     });
 
     lastRenderedPeople = allPeople;
-    drawParentChildLines(lastRenderedPeople);
+    drawParentChildLines(lastRenderedPeople); // no-op but keeps API
   } catch (err) {
     console.error("Error loading family tree:", err);
     treeLayout.innerHTML = "<p>Error loading family tree.</p>";
@@ -404,7 +426,7 @@ async function loadFamilyTree() {
 
 function setupCopyCode() {
   const joinCodeValue = document.getElementById("joinCodeValue");
-  
+
   if (joinCodeValue) {
     joinCodeValue.addEventListener("click", async () => {
       const code = joinCodeValue.textContent;
@@ -436,7 +458,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("resize", () => {
     if (lastRenderedPeople && lastRenderedPeople.length > 0) {
-      drawParentChildLines(lastRenderedPeople);
+      drawParentChildLines(lastRenderedPeople); // still a no-op
     }
   });
 });

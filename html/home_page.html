@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head> 
     <meta charset="UTF-8">
@@ -24,8 +24,9 @@
         <section class="welcome-section">
             <h2>Welcome to the Family Tree App</h2>
             <p>
-                Create and manage your own family tree, or join a tree that someone in your family has already started.
-                Use a simple access code to keep each family’s tree private and separate.
+                Create a private family tree for your relatives, or join a tree that someone in your family has
+                already started. Each tree has its own access code so different branches of the family can stay
+                separate and easy to manage.
             </p>
         </section>
 
@@ -38,8 +39,8 @@
                 <article class="action-card">
                     <h3>Create a New Family Tree</h3>
                     <p>
-                        Starting from scratch? Create a new family tree, get a unique access code, and share it with
-                        your family so they can add and explore members together.
+                        Starting from scratch? Create a tree for your family, get a unique access code, and share
+                        it with relatives so everyone can help add and update members.
                     </p>
                     <button id="createTreeBtn" class="button">
                         Create Family Tree
@@ -50,8 +51,8 @@
                 <article class="action-card">
                     <h3>Join an Existing Tree</h3>
                     <p>
-                        Someone already made a tree for your family? Enter the access code they shared with you to
-                        jump straight into your family’s tree.
+                        Already have an access code? Use it to jump straight into your family’s tree and start
+                        exploring parents, siblings, cousins, and more.
                     </p>
                     <button id="joinTreeBtn" class="button button-secondary">
                         Join with Code
@@ -62,8 +63,8 @@
                 <article class="action-card">
                     <h3>View Example Tree</h3>
                     <p>
-                        Curious what this looks like? Explore our example family tree to see how generations,
-                        spouses, and children are displayed.
+                        Want a quick preview? Open our example tree to see how generations, spouses, and children
+                        are laid out before you set up your own.
                     </p>
                     <!-- TODO: when you have an example familyId, update this href to include ?familyId=... -->
                     <a id="exampleTreeLink" href="/tree" class="button button-ghost">
@@ -75,10 +76,16 @@
 
         <!-- FORMS: these will be wired up with Firestore in JS -->
         <section class="forms-section">
+            <h2 class="forms-title">Create or Join Right Here</h2>
+            <p class="forms-subtitle">
+                Use the forms below to immediately create a new tree or join one by access code. 
+                You can always come back here later to switch to a different family tree.
+            </p>
+
             <!-- Create Tree Form -->
             <div id="createTreeFormCard" class="form-card">
                 <h3>Create a New Family Tree</h3>
-                <p>Choose a name for your family tree. You’ll receive an access code to share with your relatives.</p>
+                <p>Give your tree a name. We’ll generate an access code you can share with your family.</p>
 
                 <form id="createFamilyForm">
                     <label for="familyName">Family Tree Name</label>
@@ -105,7 +112,7 @@
             <!-- Join Tree Form -->
             <div id="joinTreeFormCard" class="form-card">
                 <h3>Join an Existing Family Tree</h3>
-                <p>Enter the access code that was shared with you to view and edit your family’s tree.</p>
+                <p>Enter the access code that was shared with you to open your family’s tree.</p>
 
                 <form id="joinFamilyForm">
                     <label for="joinCode">Access Code</label>
@@ -123,7 +130,7 @@
             </div>
         </section>
 
-        <!-- HOW-TO SECTION (updated to match multi-tree setup) -->
+        <!-- HOW-TO SECTION -->
         <section class="instructions-section">
             <h2>How It Works</h2>
             
@@ -132,44 +139,47 @@
                 <p>
                     From this home page, either <strong>create a new tree</strong> for your family
                     or <strong>join an existing tree</strong> with an access code.
-                    Once you’re in a tree, everything you see will be specific to that family.
+                    Once you’re inside a tree, everything you see is specific to that family only.
                 </p>
             </div>
 
             <div class="instruction-card">
                 <h3>2. View Your Family Tree</h3>
                 <p>
-                    On the <strong>"Family Tree"</strong> page, you’ll see all family members
-                    in this tree organized by generation, with spouses and siblings grouped together.
+                    On the <strong>"Family Tree"</strong> page, you’ll see everyone in the current tree
+                    organized by generation, with spouses and siblings grouped together.
                 </p>
                 <a href="/tree" class="button">Go to Family Tree</a>
             </div>
 
             <div class="instruction-card">
                 <h3>3. Add a Family Member</h3>
-                <p>On the Family Tree page, click the <strong>green "+" button</strong>
-                   in the bottom right corner to add a new family member to the current tree.</p>
+                <p>
+                    On the Family Tree page, click the <strong>green "+" button</strong>
+                    in the bottom-right corner to add someone new to this tree.
+                </p>
                 <ul class="instruction-list">
                     <li><strong>Required:</strong> First Name and Last Name</li>
                     <li><strong>Optional:</strong> Middle Initial, Birth Date, Parents, Spouse</li>
-                    <li><strong>Tip:</strong> Parent names as "First Last" (e.g., "John Smith")</li>
-                    <li><strong>Tip:</strong> Spouse name as "First Last" (e.g., "Jane Doe")</li>
+                    <li><strong>Parents:</strong> Enter names as "First Last" (e.g., "John Smith")</li>
+                    <li><strong>Spouse:</strong> Also as "First Last" (e.g., "Jane Doe")</li>
                 </ul>
             </div>
 
             <div class="instruction-card">
-                <h3>4. View & Edit Profiles</h3>
+                <h3>4. View &amp; Edit Profiles</h3>
                 <p>
-                    Click on any person’s card in the family tree to see their profile, including:
+                    Click on any person’s card in the tree to open their profile. You’ll see:
                 </p>
                 <ul class="instruction-list">
                     <li>Birth date</li>
                     <li>Parents and children</li>
                     <li>Spouse information</li>
-                    <li>Historical fun fact based on their birthday</li>
+                    <li>A historical fun fact based on their birthday</li>
                 </ul>
                 <p>
-                    From the profile page, you can <strong>edit</strong> or <strong>remove</strong> that person.
+                    From the profile page, you can <strong>edit</strong> or <strong>remove</strong> that person
+                    from the current family tree.
                 </p>
             </div>
 
@@ -177,7 +187,7 @@
                 <h3>5. Search for Family Members</h3>
                 <p>
                     Use the <strong>"Search"</strong> page to quickly find family members by name
-                    within the current family tree.
+                    within the currently selected family tree.
                 </p>
                 <a href="/search" class="button">Go to Search</a>
             </div>
@@ -188,10 +198,11 @@
     <style>
         .welcome-section {
             max-width: 800px;
-            margin: 40px auto;
-            padding: 30px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            margin: 40px auto 30px;
+            padding: 30px 28px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            text-align: center;
         }
 
         .welcome-section h2 {
@@ -201,13 +212,13 @@
 
         .welcome-section p {
             color: #e0e0e0;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
         }
 
         .actions-section {
             max-width: 1000px;
-            margin: 30px auto;
-            padding: 10px 20px;
+            margin: 10px auto 30px;
+            padding: 0 20px;
         }
 
         .actions-section h2 {
@@ -245,11 +256,27 @@
 
         .forms-section {
             max-width: 1000px;
-            margin: 20px auto 40px;
+            margin: 10px auto 40px;
             padding: 0 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 20px;
+        }
+
+        .forms-title {
+            grid-column: 1 / -1;
+            color: #f9fafb;
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .forms-subtitle {
+            grid-column: 1 / -1;
+            color: #d1d5db;
+            margin-bottom: 16px;
+            text-align: center;
+            font-size: 0.98rem;
         }
 
         .form-card {
@@ -295,18 +322,19 @@
 
         .instructions-section {
             max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
+            margin: 40px auto 30px;
+            padding: 0 20px 40px;
         }
 
         .instructions-section h2 {
             color: #f9fafb;
             margin-bottom: 30px;
             font-size: 2rem;
+            text-align: center;
         }
 
         .instruction-card {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.08);
             border-radius: 10px;
             padding: 25px;
             margin-bottom: 25px;
@@ -361,10 +389,17 @@
         .button:hover {
             opacity: 0.9;
         }
+
+        footer {
+            text-align: center;
+            padding: 16px 0 24px;
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
     </style>
         
     <footer>
-        <small>Copyright &copy; <span id="year"></span> Flex &amp; Grid Co.</small>
+        <small>Copyright &copy; <span id="year"></span> Family Tree App</small>
     </footer>
     
     <script type="module" src="/js/main.js"></script>
