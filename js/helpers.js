@@ -14,33 +14,35 @@ import {
 const FAMILY_ID_STORAGE_KEY = "currentFamilyId";
 
 /**
- * Store familyId in localStorage for persistence across page navigation
+ * Store familyId in sessionStorage for persistence across page navigation
+ * sessionStorage clears when the browser tab/window is closed
  */
 export function setFamilyId(familyId) {
   if (familyId) {
-    localStorage.setItem(FAMILY_ID_STORAGE_KEY, familyId);
+    sessionStorage.setItem(FAMILY_ID_STORAGE_KEY, familyId);
   } else {
-    localStorage.removeItem(FAMILY_ID_STORAGE_KEY);
+    sessionStorage.removeItem(FAMILY_ID_STORAGE_KEY);
   }
 }
 
 /**
- * Get familyId from localStorage
+ * Get familyId from sessionStorage
  */
 export function getStoredFamilyId() {
-  return localStorage.getItem(FAMILY_ID_STORAGE_KEY);
+  return sessionStorage.getItem(FAMILY_ID_STORAGE_KEY);
 }
 
 /**
  * Clear stored familyId (e.g., when viewing example tree)
  */
 export function clearFamilyId() {
-  localStorage.removeItem(FAMILY_ID_STORAGE_KEY);
+  sessionStorage.removeItem(FAMILY_ID_STORAGE_KEY);
 }
 
 /**
- * Get current familyId from URL or localStorage
+ * Get current familyId from URL or sessionStorage
  * URL takes precedence if present
+ * sessionStorage automatically clears when browser tab/window closes
  * @param {boolean} useStored - If false, only check URL (default: true)
  */
 export function getCurrentFamilyId(useStored = true) {
@@ -49,7 +51,7 @@ export function getCurrentFamilyId(useStored = true) {
   const urlFamilyId = params.get("familyId");
   
   if (urlFamilyId) {
-    // If familyId is in URL, update localStorage to persist it
+    // If familyId is in URL, update sessionStorage to persist it for this session
     setFamilyId(urlFamilyId);
     return urlFamilyId;
   }
@@ -60,7 +62,7 @@ export function getCurrentFamilyId(useStored = true) {
     return null;
   }
   
-  // Otherwise, check localStorage if useStored is true
+  // Otherwise, check sessionStorage if useStored is true
   if (useStored) {
     const storedFamilyId = getStoredFamilyId();
     return storedFamilyId || null;
