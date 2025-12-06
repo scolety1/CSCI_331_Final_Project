@@ -13,10 +13,7 @@ import {
 
 const FAMILY_ID_STORAGE_KEY = "currentFamilyId";
 
-/**
- * Store familyId in sessionStorage for persistence across page navigation
- * sessionStorage clears when the browser tab/window is closed
- */
+
 export function setFamilyId(familyId) {
   if (familyId) {
     sessionStorage.setItem(FAMILY_ID_STORAGE_KEY, familyId);
@@ -25,44 +22,31 @@ export function setFamilyId(familyId) {
   }
 }
 
-/**
- * Get familyId from sessionStorage
- */
+
 export function getStoredFamilyId() {
   return sessionStorage.getItem(FAMILY_ID_STORAGE_KEY);
 }
 
-/**
- * Clear stored familyId (e.g., when viewing example tree)
- */
+
 export function clearFamilyId() {
   sessionStorage.removeItem(FAMILY_ID_STORAGE_KEY);
 }
 
-/**
- * Get current familyId from URL or sessionStorage
- * URL takes precedence if present
- * sessionStorage automatically clears when browser tab/window closes
- * @param {boolean} useStored - If false, only check URL (default: true)
- */
+
 export function getCurrentFamilyId(useStored = true) {
-  // First check URL parameters
   const params = new URLSearchParams(window.location.search);
   const urlFamilyId = params.get("familyId");
   
   if (urlFamilyId) {
-    // If familyId is in URL, update sessionStorage to persist it for this session
     setFamilyId(urlFamilyId);
     return urlFamilyId;
   }
   
-  // If URL explicitly has familyId=null or empty, clear stored value
   if (params.has("familyId") && !urlFamilyId) {
     clearFamilyId();
     return null;
   }
   
-  // Otherwise, check sessionStorage if useStored is true
   if (useStored) {
     const storedFamilyId = getStoredFamilyId();
     return storedFamilyId || null;
@@ -75,26 +59,22 @@ export function getCurrentFamilyId(useStored = true) {
    NORMALIZATION HELPERS
 ----------------------------------- */
 
-// Make names lowercase and trimmed for consistent storage
 export function normalizeNamePart(name) {
   if (!name) return "";
   return name.trim().toLowerCase();
 }
 
-// Build a normalized "first last" full name string
 export function buildFullName(firstName, lastName) {
   const f = normalizeNamePart(firstName);
   const l = normalizeNamePart(lastName);
   return `${f} ${l}`.trim();
 }
 
-// Turn "john" → "John"
 export function toTitle(str) {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-// Turn "john doe" → "John Doe"
 export function toTitleFullName(firstName, lastName) {
   return `${toTitle(firstName)} ${toTitle(lastName)}`.trim();
 }
@@ -103,9 +83,7 @@ export function toTitleFullName(firstName, lastName) {
    FIRESTORE LOOKUPS
 ----------------------------------- */
 
-// Get all people (used in loadFamilyTree, etc.)
 export async function getAllPeople(familyId = null) {
-  // If we have a familyId, load the real people for that family from "people"
   if (familyId) {
     const peopleRef = collection(db, "people");
     const qPeople = query(peopleRef, where("familyId", "==", familyId));
@@ -117,7 +95,6 @@ export async function getAllPeople(familyId = null) {
     }));
   }
 
-  // Otherwise, fall back to the static example tree collection
   const snapshot = await getDocs(collection(db, "example"));
   return snapshot.docs.map(doc => ({
     id: doc.id,
@@ -158,8 +135,6 @@ export async function findPersonByFullName(firstName, lastName, familyId = null)
    RELATIONSHIP HELPERS
 ----------------------------------- */
 
-// Check if two people are spouses of each other
-// Uses spouseFirstName / spouseLastName fields
 export function areSpouses(personA, personB) {
   if (!personA || !personB) return false;
 
@@ -181,7 +156,6 @@ export function areSpouses(personA, personB) {
   );
 }
 
-// Does this person have at least one parent string?
 export function hasParents(person) {
   if (!person) return false;
   return Boolean(
@@ -190,7 +164,6 @@ export function hasParents(person) {
   );
 }
 
-// Does this person have two parents?
 export function hasTwoParents(person) {
   if (!person) return false;
   return Boolean(
@@ -199,8 +172,7 @@ export function hasTwoParents(person) {
   );
 }
 
-// Get children of a given person from a list of all people.
-// Assumes child.parent1 / parent2 store "first last" in lowercase.
+
 export function getChildren(person, allPeople) {
   if (!person) return [];
   const fullName = buildFullName(person.firstName, person.lastName);
@@ -210,12 +182,11 @@ export function getChildren(person, allPeople) {
   );
 }
 
-// Get full siblings: share BOTH parents (order doesn’t matter)
 export function getSiblings(person, allPeople) {
   if (!person) return [];
 
   return allPeople.filter(p => {
-    if (p.id === person.id) return false; // skip self
+    if (p.id === person.id) return false;
 
     const sameOrder =
       p.parent1 === person.parent1 &&
@@ -229,7 +200,6 @@ export function getSiblings(person, allPeople) {
   });
 }
 
-// Get half-siblings: share EXACTLY one parent
 export function getHalfSiblings(person, allPeople) {
   if (!person) return [];
 

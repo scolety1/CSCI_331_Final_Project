@@ -30,7 +30,6 @@ async function loadProfile() {
   const params = new URLSearchParams(window.location.search);
   personId = params.get("person");
   
-  // Get familyId from URL or localStorage
   familyId = params.get("familyId") || getFamilyIdFromHelper();
 
   if (!personId) {
@@ -40,8 +39,6 @@ async function loadProfile() {
   }
 
   try {
-    // Try to load from the correct collection based on familyId
-    // If familyId is provided, use "people" collection, otherwise try "example"
     let docRef;
     let docSnap;
     
@@ -50,7 +47,6 @@ async function loadProfile() {
       docSnap = await getDoc(docRef);
     }
     
-    // If not found in "people" or no familyId, try "example"
     if (!familyId || !docSnap.exists()) {
       docRef = doc(db, "example", personId);
       docSnap = await getDoc(docRef);
@@ -64,13 +60,12 @@ async function loadProfile() {
     const data = docSnap.data();
     const person = { id: personId, ...data };
     
-    // If we loaded from "people" collection, extract familyId from the data
-    // or use the one from URL
+
     if (!familyId && data.familyId) {
       familyId = data.familyId;
     }
 
-    // NAME - combine firstName and lastName
+    // NAME
     const fullName = toTitleFullName(data.firstName || "", data.lastName || "");
     document.getElementById("name").textContent = fullName || "Unnamed";
 
@@ -88,7 +83,7 @@ async function loadProfile() {
       birthDateEl.textContent = "Unknown";
     }
 
-    // PARENTS - format parent1 and parent2
+    // PARENTS
     const parentsList = [];
     if (data.parent1) {
       const parts = data.parent1.split(" ");
@@ -109,7 +104,7 @@ async function loadProfile() {
     document.getElementById("parents").textContent =
       parentsList.length > 0 ? parentsList.join(" and ") : "Unknown";
 
-    // SPOUSE - combine spouseFirstName and spouseLastName
+    // SPOUSE
     const spouseName = toTitleFullName(
       data.spouseFirstName || "", 
       data.spouseLastName || ""
@@ -117,8 +112,7 @@ async function loadProfile() {
     document.getElementById("spouse").textContent =
       spouseName || "No spouse listed.";
 
-    // CHILDREN - use helper function to get children
-    // Pass familyId so we get children from the correct collection
+    // CHILDREN
     const allPeople = await getAllPeople(familyId);
     const children = getChildren(person, allPeople);
     if (children.length > 0) {
@@ -143,13 +137,12 @@ async function loadProfile() {
           profileImgEl.style.display = "block";
           if (profileCardEl) profileCardEl.classList.remove("no-photo");
         } else {
-          // Hide the image and switch layout to text-only
           profileImgEl.style.display = "none";
           if (profileCardEl) profileCardEl.classList.add("no-photo");
         }
       }
 
-    // FUN FACT - fetch based on birthday
+    // FUN FACT
     if (data.birthDate && typeof data.birthDate.toDate === "function") {
         const birthDate = data.birthDate.toDate();
         await fetchFunFact(birthDate);
@@ -200,7 +193,7 @@ async function loadProfile() {
         editBio.value = data.bio || "";
     }
 
-    // Birthdate: convert Firestore Timestamp to yyyy-mm-dd for <input type="date">
+    // Birthdate
     if (editBirthDate && data.birthDate && typeof data.birthDate.toDate === "function") {
         const d = data.birthDate.toDate();
         const yyyy = d.getFullYear();
@@ -218,7 +211,6 @@ async function loadProfile() {
 }
 
 
-// ... your existing code where personId is set in loadProfile ...
 
 const editForm = document.getElementById("editPersonForm");
 
@@ -230,7 +222,6 @@ if (editForm) {
       return;
     }
 
-    // ----- GET & CLEAN INPUT VALUES (from EDIT fields) -----
     const rawFirstName      = document.getElementById("editFirstName").value.trim();
     const rawMiddleInitial  = document.getElementById("editMiddleInitial").value.trim();
     const rawLastName       = document.getElementById("editLastName").value.trim();
@@ -259,19 +250,17 @@ if (editForm) {
       spouseLastName  = parts.slice(1).join(" ") || "";
     }
 
-    // Birthdate → Timestamp
     let birthDate = null;
     if (birthDateRaw) {
       const [yearStr, monthStr, dayStr] = birthDateRaw.split("-");
       const year  = Number(yearStr);
-      const month = Number(monthStr) - 1; // 0-based
+      const month = Number(monthStr) - 1;
       const day   = Number(dayStr);
 
       const jsDate = new Date(year, month, day);
       birthDate = Timestamp.fromDate(jsDate);
     }
 
-        // ----- OPTIONAL: UPLOAD IMAGE FILE TO FIREBASE STORAGE -----
     let imageUrl = null;
 
     if (imageFile) {
@@ -285,7 +274,6 @@ if (editForm) {
         }
     }
 
-    // ----- BUILD PERSON OBJECT (same pattern as add) -----
     const personData = {
       firstName,
       lastName,
@@ -300,19 +288,15 @@ if (editForm) {
     if (rawBio)             personData.bio              = rawBio;
     if (imageUrl)           personData.image = imageUrl;
 
-    // ----- UPDATE EXISTING DOC IN FIRESTORE -----
     try {
-      // Use the correct collection based on familyId
       const collectionName = familyId ? "people" : "example";
       const personRef = doc(db, collectionName, personId);
       await updateDoc(personRef, personData);
 
       alert("Person updated! Reloading profile...");
-      // optional: close modal
       const modal = document.getElementById("editPersonModal");
       if (modal) modal.style.display = "none";
 
-      // Reload page to see updated profile info
       window.location.reload();
     } catch (error) {
       console.error("Error updating person:", error);
@@ -323,18 +307,16 @@ if (editForm) {
   console.log("No #editPersonForm on this page, skipping edit setup.");
 }
 
-// Fetch fun fact from Numbers API based on birthday
 async function fetchFunFact(birthDate) {
   const funFactEl = document.getElementById("funFact");
   funFactEl.textContent = "Loading fun fact...";
   
-  const month = birthDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+  const month = birthDate.getMonth() + 1;
   const day = birthDate.getDate();
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
   
   try {
-    // Use Vercel serverless function to avoid CORS issues
     const apiUrl = `/api/funfact?month=${month}&day=${day}`;
     const response = await fetch(apiUrl);
     
@@ -346,7 +328,6 @@ async function fetchFunFact(birthDate) {
     funFactEl.textContent = data.text || `On ${monthNames[month - 1]} ${day}, many interesting historical events have occurred throughout history!`;
   } catch (error) {
     console.error("Error fetching fun fact:", error);
-    // Fallback message
     funFactEl.textContent = `On ${monthNames[month - 1]} ${day}, many significant historical events have occurred! Did you know that people born on this date share it with many notable figures throughout history?`;
   }
 }
@@ -361,19 +342,16 @@ function setupEditPersonModal() {
 
   if (!modal || !btn) return;
 
-  // Open modal
   btn.onclick = () => {
     modal.style.display = "block";
   };
 
-  // Close with X
   if (closeBtn) {
     closeBtn.onclick = () => {
       modal.style.display = "none";
     };
   }
 
-  // Close when clicking outside
   window.addEventListener("click", (event) => {
     if (event.target === modal) {
       modal.style.display = "none";
@@ -394,11 +372,9 @@ document
     if (!confirmDelete) return;
 
     try {
-      // Use the correct collection based on familyId
       const collectionName = familyId ? "people" : "example";
       await deleteDoc(doc(db, collectionName, personId));
       alert("Person removed successfully.");
-      // Redirect back to tree page, preserving familyId if it exists
       const redirectUrl = familyId ? `/tree?familyId=${familyId}` : "/tree";
       window.location.href = redirectUrl;
     } catch (error) {

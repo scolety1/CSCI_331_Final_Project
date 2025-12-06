@@ -11,8 +11,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 import { setFamilyId } from "./helpers.js";
 
-// Grab elements that only exist on the home page.
-// If they aren't there, just bail so this file can be safely imported everywhere.
 const createTreeBtn      = document.getElementById("createTreeBtn");
 const joinTreeBtn        = document.getElementById("joinTreeBtn");
 const createFamilyForm   = document.getElementById("createFamilyForm");
@@ -25,7 +23,6 @@ const joinFormCard       = document.getElementById("joinTreeFormCard");
 ----------------------------------- */
 
 function generateJoinCode(length = 6) {
-    // Exclude confusing characters like 0/O and 1/I
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "";
     for (let i = 0; i < length; i++) {
@@ -87,13 +84,10 @@ if (createFamilyForm) {
 
             const familyId = docRef.id;
 
-            // Store familyId in sessionStorage for persistence
             setFamilyId(familyId);
 
-            // Show a simple confirmation - the join code will be displayed on the tree page
             alert(`Your family tree "${rawName}" has been created! The access code is displayed on the tree page.`);
 
-            // Redirect into the tree view for this family
             window.location.href = `/tree?familyId=${familyId}`;
         } catch (err) {
             console.error("Error creating family tree:", err);
@@ -139,10 +133,8 @@ if (joinFamilyForm) {
       const familyDoc = snap.docs[0];
       const familyId = familyDoc.id;
 
-      // Store familyId in localStorage for persistence
       setFamilyId(familyId);
 
-      // Redirect into that family's tree
       window.location.href = `/tree?familyId=${familyId}`;
     } catch (err) {
       console.error("Error joining family tree:", err);

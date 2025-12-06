@@ -41,16 +41,14 @@ if(form) {
       spouseLastName  = parts.slice(1).join(" ") || "";
     }
 
-    // 🔧 FIXED: create date in LOCAL time instead of UTC
     let birthDate = null;
     if (birthDateRaw) {
-      // birthDateRaw is "YYYY-MM-DD"
       const [yearStr, monthStr, dayStr] = birthDateRaw.split("-");
       const year  = Number(yearStr);
-      const month = Number(monthStr) - 1; // JS months are 0-based
+      const month = Number(monthStr) - 1;
       const day   = Number(dayStr);
 
-      const jsDate = new Date(year, month, day); // local midnight
+      const jsDate = new Date(year, month, day);
       birthDate = Timestamp.fromDate(jsDate);
     }
 
@@ -68,14 +66,12 @@ if(form) {
     if (spouseFirstName)  personData.spouseFirstName  = spouseFirstName;
     if (spouseLastName)   personData.spouseLastName   = spouseLastName;
     
-    // Add familyId if we're in a family tree (not example tree)
     if (familyId) {
       personData.familyId = familyId;
     }
     
     // ----- SAVE TO FIRESTORE -----
     try {
-      // Use "people" collection if familyId exists, otherwise "example"
       const collectionName = familyId ? "people" : "example";
       await addDoc(collection(db, collectionName), personData);
       alert("Person added! Reload the page to see them.");

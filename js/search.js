@@ -14,7 +14,6 @@ let currentFamilyId = null;
  */
 function createResultCard(person, familyId = null) {
   const link = document.createElement("a");
-  // Use absolute path for Vercel routing, include familyId if present
   let profileUrl = `/profile?person=${encodeURIComponent(person.id)}`;
   if (familyId) {
     profileUrl += `&familyId=${encodeURIComponent(familyId)}`;
@@ -61,7 +60,6 @@ function runSearch(rawQuery, resultsContainer) {
     return;
   }
 
-  // Use your normalization so we match what's in Firestore
   const q = normalizeNamePart(trimmed);
   console.log("Search query (normalized):", q);
 
@@ -103,7 +101,6 @@ async function initSearchPage() {
 
   console.log("Initializing search page…");
 
-  // Get familyId from URL or localStorage
   currentFamilyId = getCurrentFamilyId();
 
   try {
