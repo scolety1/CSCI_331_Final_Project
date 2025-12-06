@@ -14,10 +14,10 @@
   max-width: 900px;
   width: 100%;
   padding: 2rem 2.5rem;
-  background: rgba(8, 20, 40, 0.95); /* works with your dark theme */
+  background: #020617;              /* very dark navy */
   border-radius: 16px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
-  color: #f5f7ff;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+  color: #e5e7eb;                   /* light gray text */
 }
 
 /* LEFT COLUMN: image container */
@@ -33,18 +33,26 @@
   height: 260px;
   border-radius: 16px;
   object-fit: cover;
-  background: #1d2940; /* placeholder if no image loaded yet */
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: #1f2937;              /* placeholder if no image loaded yet */
+  border: 2px solid rgba(148, 163, 184, 0.5);
 }
 
 /* RIGHT COLUMN: text */
 .profile-details {
   flex: 1;
+  text-align: center;
 }
 
 .profile-details h1 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   margin-bottom: 1rem;
+  color: #f9fafb;                   /* almost white */
+}
+
+/* Override the screaming red <strong> from global.css just inside this card */
+.profile-card strong {
+  color: #93c5fd;                   /* soft blue accent */
+  font-weight: 600;
 }
 
 .profileInfo {
@@ -52,47 +60,64 @@
   line-height: 1.4;
 }
 
-/* Buttons row */
-.profile-buttons {
-  margin-top: 1.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+/* Make the fun fact body text normal color */
+#funFact {
+  color: #e5e7eb;
 }
 
-/* Reuse .button from global.css but tweak spacing/colors */
+/* Buttons row */
+.profile-buttons {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Base button style (works with your existing .button class) */
 .profile-btn {
-  padding-inline: 1.2rem;
-  padding-block: 0.55rem;
+  padding-inline: 1.4rem;
+  padding-block: 0.6rem;
   border-radius: 999px;
-  font-size: 0.9rem;
-  border: none;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease,
+    border-color 0.2s ease, color 0.2s ease;
 }
 
+/* Color variants */
 .profile-btn.primary {
-  background: #4a8dff;
-  color: #fff;
+  background: #3b82f6;              /* blue */
+  color: #f9fafb;
 }
 
 .profile-btn.secondary {
-  background: #ffffff0f;
-  color: #f5f7ff;
+  background: transparent;
+  border-color: #475569;
+  color: #e5e7eb;
 }
 
 .profile-btn.danger {
-  background: #ff4e4e;
-  color: #fff;
+  background: #ef4444;              /* softer red */
+  color: #f9fafb;
 }
 
+/* Hover */
 .profile-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Make sure on wider screens the buttons stay on one line */
+@media (min-width: 640px) {
+  .profile-buttons {
+    flex-wrap: nowrap;
+  }
 }
 
 /* Mobile layout: stack columns */
@@ -106,13 +131,9 @@
   .profile-details {
     width: 100%;
   }
-
-  .profile-buttons {
-    justify-content: center;
-  }
 }
 
-/* No-photo state: hide left column and keep card centered */
+/* No-photo state: hide left column and still keep card centered */
 .profile-card.no-photo .profile-photo-wrapper {
   display: none;
 }
