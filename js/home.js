@@ -87,16 +87,11 @@ if (createFamilyForm) {
 
             const familyId = docRef.id;
 
-            // Store familyId in localStorage for persistence
+            // Store familyId in sessionStorage for persistence
             setFamilyId(familyId);
 
-            // You can replace this alert with a nice modal later if you want
-            alert(
-                `Your family tree has been created!\n\n` +
-                `Name: ${rawName}\n` +
-                `Access code: ${joinCode}\n\n` +
-                `Share this code with your family so they can join.`
-            );
+            // Show a simple confirmation - the join code will be displayed on the tree page
+            alert(`Your family tree "${rawName}" has been created! The access code is displayed on the tree page.`);
 
             // Redirect into the tree view for this family
             window.location.href = `/tree?familyId=${familyId}`;

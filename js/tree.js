@@ -154,11 +154,17 @@ function getCurrentFamilyId() {
 
 async function updateTreeTitle(familyId) {
   const titleEl = document.getElementById("treeTitle");
+  const joinCodeDisplay = document.getElementById("joinCodeDisplay");
+  const joinCodeValue = document.getElementById("joinCodeValue");
+  
   if (!titleEl) return;
 
-  // Example tree: no familyId → keep default title
+  // Example tree: no familyId → keep default title and hide join code
   if (!familyId) {
     titleEl.textContent = "Example Family Tree";
+    if (joinCodeDisplay) {
+      joinCodeDisplay.style.display = "none";
+    }
     return;
   }
 
@@ -168,6 +174,9 @@ async function updateTreeTitle(familyId) {
 
     if (!familySnap.exists()) {
       titleEl.textContent = "Family Tree";
+      if (joinCodeDisplay) {
+        joinCodeDisplay.style.display = "none";
+      }
       return;
     }
 
@@ -176,9 +185,20 @@ async function updateTreeTitle(familyId) {
 
     // Optional: update browser tab title as well
     document.title = data.name || "Our Family Tree";
+    
+    // Display join code if available
+    if (joinCodeDisplay && joinCodeValue && data.joinCode) {
+      joinCodeValue.textContent = data.joinCode;
+      joinCodeDisplay.style.display = "block";
+    } else if (joinCodeDisplay) {
+      joinCodeDisplay.style.display = "none";
+    }
   } catch (err) {
     console.error("Error loading family name:", err);
     titleEl.textContent = "Family Tree";
+    if (joinCodeDisplay) {
+      joinCodeDisplay.style.display = "none";
+    }
   }
 }
 
@@ -241,7 +261,41 @@ async function loadFamilyTree() {
    INIT
 --------------------------- */
 
+// Setup copy code button functionality
+function setupCopyCodeButton() {
+  const copyBtn = document.getElementById("copyCodeBtn");
+  const joinCodeValue = document.getElementById("joinCodeValue");
+  
+  if (copyBtn && joinCodeValue) {
+    copyBtn.addEventListener("click", async () => {
+      const code = joinCodeValue.textContent;
+      if (code) {
+        try {
+          await navigator.clipboard.writeText(code);
+          // Visual feedback
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = "✓";
+          copyBtn.style.opacity = "0.7";
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.opacity = "1";
+          }, 2000);
+        } catch (err) {
+          console.error("Failed to copy code:", err);
+          // Fallback: select the text
+          const range = document.createRange();
+          range.selectNode(joinCodeValue);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+          alert("Code selected. Press Ctrl+C to copy.");
+        }
+      }
+    });
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setupAddPersonModal();
+  setupCopyCodeButton();
   loadFamilyTree();
 });
