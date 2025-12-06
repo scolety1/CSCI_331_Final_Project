@@ -64,7 +64,7 @@
 .profileInfo {
   margin: 0.35rem 0;
   line-height: 1.4;
-  color: black;
+
 }
 
 /* Make the fun fact body text normal color */
@@ -143,4 +143,8 @@
 /* No-photo state: hide left column and still keep card centered */
 .profile-card.no-photo .profile-photo-wrapper {
   display: none;
+}
+
+.fart {
+    color: black;
 }
