@@ -11,7 +11,8 @@ import {
   areSpouses,
   toTitleFullName,
   getCurrentFamilyId as getFamilyIdFromHelper,
-  buildFullName
+  buildFullName,
+  areSplitUpCoParents
 } from "./helpers.js";
 
 let lastRenderedPeople = [];
@@ -43,7 +44,7 @@ function createPersonCard(person, familyId) {
   return link;
 }
 
-function renderGeneration(gen, peopleInGen, treeLayout, familyId) {
+function renderGeneration(gen, peopleInGen, treeLayout, familyId, allPeople) {
   const container = document.createElement("div");
   container.className = "generation";
 
@@ -55,6 +56,7 @@ function renderGeneration(gen, peopleInGen, treeLayout, familyId) {
   peopleInGen.forEach(p => {
     if (used.has(p.id)) return;
 
+    // 1) Try to pair with current spouse in this generation
     const spouse = peopleInGen.find(
       s => !used.has(s.id) && areSpouses(p, s)
     );
@@ -67,15 +69,34 @@ function renderGeneration(gen, peopleInGen, treeLayout, familyId) {
       row.appendChild(pair);
       used.add(p.id);
       used.add(spouse.id);
-    } else {
-      row.appendChild(createPersonCard(p, familyId));
-      used.add(p.id);
+      return;
     }
+
+    // 2) Otherwise, see if there's a split-up co-parent in this generation
+    const splitPartner = peopleInGen.find(
+      s => !used.has(s.id) && areSplitUpCoParents(p, s, allPeople)
+    );
+
+    if (splitPartner) {
+      const pair = document.createElement("div");
+      pair.className = "co-parent-pair split-up"; // style this differently in CSS
+      pair.appendChild(createPersonCard(p, familyId));
+      pair.appendChild(createPersonCard(splitPartner, familyId));
+      row.appendChild(pair);
+      used.add(p.id);
+      used.add(splitPartner.id);
+      return;
+    }
+
+    // 3) No spouse or split-up co-parent → render alone
+    row.appendChild(createPersonCard(p, familyId));
+    used.add(p.id);
   });
 
   container.appendChild(row);
   treeLayout.appendChild(container);
 }
+
 
 function drawLines(people) {
   const layout = document.getElementById("tree-layout");
@@ -171,12 +192,13 @@ async function loadFamilyTree() {
   layout.innerHTML = "";
 
   genKeys.forEach(gen => {
-    renderGeneration(gen, genMap.get(gen), layout, familyId);
+    renderGeneration(gen, genMap.get(gen), layout, familyId, people); // 👈 pass people
   });
 
   lastRenderedPeople = people;
   drawLines(people);
 }
+
 
 document.addEventListener("DOMContentLoaded", loadFamilyTree);
 window.addEventListener("resize", () => drawLines(lastRenderedPeople));

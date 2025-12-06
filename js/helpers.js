@@ -200,6 +200,60 @@ export function getSiblings(person, allPeople) {
   });
 }
 
+// Shared children between two people (bio co-parents)
+export function getSharedChildren(personA, personB, allPeople) {
+  if (!personA || !personB) return [];
+
+  const aName = buildFullName(personA.firstName, personA.lastName);
+  const bName = buildFullName(personB.firstName, personB.lastName);
+
+  return allPeople.filter(child => {
+    const parents = [child.parent1, child.parent2].filter(Boolean);
+    return parents.includes(aName) && parents.includes(bName);
+  });
+}
+
+// All co-parents of a given person (anyone they share a child with)
+export function getCoParents(person, allPeople) {
+  if (!person) return [];
+
+  const myName = buildFullName(person.firstName, person.lastName);
+  const coParentNames = new Set();
+
+  // Find all name-strings of people who are the "other" parent
+  allPeople.forEach(child => {
+    const parents = [child.parent1, child.parent2].filter(Boolean);
+    if (!parents.includes(myName)) return;
+
+    parents.forEach(pName => {
+      if (pName && pName !== myName) {
+        coParentNames.add(pName);
+      }
+    });
+  });
+
+  // Convert those name-strings back to actual person objects
+  const result = [];
+  allPeople.forEach(p => {
+    const full = buildFullName(p.firstName, p.lastName);
+    if (coParentNames.has(full)) {
+      result.push(p);
+    }
+  });
+
+  return result;
+}
+
+export function areSplitUpCoParents(personA, personB, allPeople) {
+  if (!personA || !personB) return false;
+
+  if (areSpouses(personA, personB)) return false;
+
+  const sharedKids = getSharedChildren(personA, personB, allPeople);
+  return sharedKids.length > 0;
+}
+
+
 export function getHalfSiblings(person, allPeople) {
   if (!person) return [];
 
