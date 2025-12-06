@@ -67,11 +67,10 @@
     background-color: #f9fafb;
     color: #111827;
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-    overflow-x: auto;   /* allow horizontal scroll */
-    overflow-y: auto;   /* just in case it gets tall */
+    overflow-x: auto;  
+    overflow-y: auto;
 }
 
-/* optional: legacy SVG layer, currently unused but harmless */
 .tree-lines {
     position: absolute;
     inset: 0;
@@ -87,7 +86,6 @@
     stroke-width: 2;
 }
 
-/* One generation band (row of family blocks) */
 .generation {
     position: relative;
     display: flex;
@@ -97,7 +95,6 @@
     padding: 24px 0;
 }
 
-/* Hide generation title in UI (can toggle for debugging) */
 .generation-title {
     display: none !important;
 }
