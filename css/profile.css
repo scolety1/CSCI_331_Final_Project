@@ -7,6 +7,12 @@
   justify-content: center;
 }
 
+/* Override global <strong> red inside the profile card */
+.profile-card strong {
+  color: #ffffff !important;  /* pure white */
+  font-weight: 600;
+}
+
 /* Main card (image + info) */
 .profile-card {
   display: flex;

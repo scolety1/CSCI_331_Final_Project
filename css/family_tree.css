@@ -48,9 +48,10 @@
     margin-top: 4px;
 }
 
-/* ===== FAMILY TREE PAGE — MODERN CARD LAYOUT ===== */
+/* ===== FAMILY TREE PAGE — CARD LAYOUT ===== */
 
 .tree-layout {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -62,87 +63,68 @@
     background-color: #f9fafb;
     color: #111827;
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-    position: relative;
+    overflow: visible;
 }
 
-/* One generation row */
+/* SVG layer for parent→child connectors */
+.tree-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.tree-lines path {
+    fill: none;
+    stroke: rgba(30, 64, 175, 0.9); /* deep navy for parent-child lines */
+    stroke-width: 2;
+}
+
+/* One generation block */
 .generation {
     position: relative;
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 24px;
-    padding: 16px 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 0;
 }
 
-/* Horizontal connector line that runs behind the cards in this generation */
-.generation::before {
-    content: "";
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    top: 50%;
-    height: 0;
-    border-top: 2px solid rgba(148, 163, 184, 0.6);  /* slate-ish gray line */
-    z-index: 0;
+/* Title above each generation row */
+.generation-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    margin: 0;
 }
 
-/* Vertical connector between this generation and the next one */
-.generation:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 40px; /* distance to next row */
-    border-left: 2px solid rgba(148, 163, 184, 0.6);
-    transform: translateX(-50%);
-    z-index: 0;
-}
-
-/* Make sure the first and last rows don’t look cramped */
-.generation:first-child {
-    padding-top: 8px;
-}
-.generation:last-child {
-    padding-bottom: 8px;
-}
-/* for siblings */
-/* Container for sibling groups (children of a pair) */
-.sibling-group {
+/* Row that actually holds the cards / spouse pairs */
+.generation-row {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 24px;
     justify-content: center;
-    position: relative;
-    z-index: 1;  /* sit above the connector lines */
+    z-index: 1; /* keep above SVG lines */
 }
 
-/* Optional: small line above sibling group to show it connects to parents */
-.sibling-group::before {
-    content: "";
-    position: absolute;
-    top: -18px;
-    left: 50%;
-    width: 50px;
-    height: 18px;
-    border-left: 2px solid rgba(148, 163, 184, 0.7);
-    border-bottom: 2px solid rgba(148, 163, 184, 0.7);
-    border-bottom-left-radius: 12px;
-    transform: translateX(-50%);
-}
+/* ===== SPOUSE / DIVORCED PAIRS ===== */
 
-/* Married / partner pair: keep cards side-by-side but no ugly box */
+/* Married / partner pair: keep cards side-by-side */
 .spouse-pair {
     display: flex;
     gap: 16px;
     justify-content: center;
     align-items: stretch;
     position: relative;
-    z-index: 1;  /* above lines */
+    z-index: 1;
 }
 
-/* Small connector between spouses (a short bar between them) */
+/* Small connector between spouses (short bar) */
 .spouse-pair::before {
     content: "";
     position: absolute;
@@ -150,8 +132,9 @@
     left: 50%;
     width: 40px;
     height: 0;
-    border-top: 2px solid rgba(148, 163, 184, 0.7);
+    border-top: 2px solid rgba(249, 115, 22, 0.9); /* warm color for spouse link */
     transform: translate(-50%, -50%);
+    z-index: 0;
 }
 
 /* Divorced pair: visually separated but still “linked” */
@@ -171,8 +154,9 @@
     left: 50%;
     width: 40px;
     height: 0;
-    border-top: 2px dashed rgba(239, 68, 68, 0.8); /* red dashed line */
+    border-top: 2px dashed rgba(239, 68, 68, 0.85); /* red dashed line */
     transform: translate(-50%, -50%);
+    z-index: 0;
 }
 
 /* ===== PERSON CARDS ===== */
@@ -193,23 +177,31 @@
 
 .person-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 35px rgba(15, 23, 42, 0.20);
+    box-shadow: 0 16px 35px rgba(15, 23, 42, 0.2);
     border-color: #2563eb;
 }
 
 /* Name line */
+.person-card h3,
 .person-card .name {
     font-weight: 600;
     font-size: 1.05rem;
     color: #111827;
-    margin-bottom: 6px;
+    margin: 0 0 6px 0;
 }
 
 /* Secondary text (dates, notes, etc.) */
+.person-card p,
 .person-card .meta {
     font-size: 0.9rem;
-    color: black;
-    margin-bottom: 2px;
+    color: #374151;
+    margin: 2px 0;
+}
+
+/* Debug generation text if you keep .debug-gen */
+.person-card .debug-gen {
+    font-size: 0.8rem;
+    color: #9ca3af;
 }
 
 /* Example of a subtle tag (e.g., “Divorced”, “Spouse”, etc.) */

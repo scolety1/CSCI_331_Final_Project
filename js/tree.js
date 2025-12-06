@@ -11,7 +11,11 @@ import {
   areSpouses,
   toTitleFullName,
   getCurrentFamilyId as getFamilyIdFromHelper,
+  buildFullName
 } from "./helpers.js";
+
+/* Keep a reference to the last rendered people so we can redraw lines on resize */
+let lastRenderedPeople = [];
 
 /* ---------------------------
    MODAL: ADD PERSON (UI ONLY)
@@ -75,6 +79,7 @@ function createPersonCard(person, familyId = null) {
   link.href = profileUrl;
   link.style.textDecoration = "none";
   link.style.color = "inherit";
+  link.dataset.personId = person.id; // for connector calculations
 
   const card = document.createElement("div");
   card.className = "person-card";
@@ -142,6 +147,144 @@ function renderGeneration(genNumber, peopleInGen, treeLayout, familyId = null) {
 
   genContainer.appendChild(row);
   treeLayout.appendChild(genContainer);
+}
+
+/* ---------------------------
+   PARENT → CHILD CONNECTOR LINES
+--------------------------- */
+
+function drawParentChildLines(people) {
+  const treeLayout = document.getElementById("tree-layout");
+  if (!treeLayout) return;
+
+  // Remove any existing SVG
+  const oldSvg = document.getElementById("tree-lines-svg");
+  if (oldSvg && oldSvg.parentNode) {
+    oldSvg.parentNode.removeChild(oldSvg);
+  }
+
+  if (!people || people.length === 0) return;
+
+  const layoutRect = treeLayout.getBoundingClientRect();
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("id", "tree-lines-svg");
+  svg.setAttribute("class", "tree-lines");
+  svg.setAttribute("width", layoutRect.width);
+  svg.setAttribute("height", layoutRect.height);
+  svg.setAttribute("viewBox", `0 0 ${layoutRect.width} ${layoutRect.height}`);
+
+  // Map personId -> DOM element + rect info
+  const elMap = new Map();
+  const allEls = treeLayout.querySelectorAll("[data-person-id]");
+  allEls.forEach((el) => {
+    const id = el.dataset.personId;
+    if (!id) return;
+    const rect = el.getBoundingClientRect();
+    elMap.set(id, {
+      el,
+      rect,
+      centerX: rect.left + rect.width / 2 - layoutRect.left,
+      topY: rect.top - layoutRect.top,
+      bottomY: rect.bottom - layoutRect.top,
+    });
+  });
+
+  // Build fullName -> person map so we can find parents from parent1/parent2 strings
+  const nameToPerson = new Map();
+  people.forEach((p) => {
+    const full = buildFullName(p.firstName, p.lastName);
+    if (full) {
+      nameToPerson.set(full, p);
+    }
+  });
+
+  // Group children by their parent pair (order independent)
+  const parentGroupMap = new Map();
+
+  people.forEach((child) => {
+    const p1 = child.parent1 || "";
+    const p2 = child.parent2 || "";
+    if (!p1 && !p2) return; // unknown parents
+
+    let key;
+    if (p1 && p2) {
+      // sort so (A,B) and (B,A) are the same group
+      key = [p1, p2].sort().join("|");
+    } else {
+      key = p1 || p2; // single-parent family
+    }
+
+    if (!parentGroupMap.has(key)) {
+      parentGroupMap.set(key, {
+        parentNames: [p1 || null, p2 || null],
+        children: [],
+      });
+    }
+    parentGroupMap.get(key).children.push(child);
+  });
+
+  // For each parent group, draw connectors down to their children
+  parentGroupMap.forEach((group) => {
+    const [p1Name, p2Name] = group.parentNames;
+
+    const parentPersons = [];
+    if (p1Name && nameToPerson.has(p1Name)) {
+      parentPersons.push(nameToPerson.get(p1Name));
+    }
+    if (p2Name && nameToPerson.has(p2Name)) {
+      const p2Person = nameToPerson.get(p2Name);
+      if (!parentPersons.includes(p2Person)) {
+        parentPersons.push(p2Person);
+      }
+    }
+
+    if (parentPersons.length === 0) return;
+
+    // Get DOM positions for parents
+    const parentCenters = parentPersons
+      .map((p) => elMap.get(p.id))
+      .filter(Boolean);
+
+    if (parentCenters.length === 0) return;
+
+    // Parent anchor: mid-point between parents, at their bottom
+    let parentX;
+    let parentY;
+
+    if (parentCenters.length === 1) {
+      parentX = parentCenters[0].centerX;
+      parentY = parentCenters[0].bottomY + 4;
+    } else {
+      parentX =
+        parentCenters.reduce((sum, pc) => sum + pc.centerX, 0) /
+        parentCenters.length;
+      parentY = Math.max(...parentCenters.map((pc) => pc.bottomY)) + 4;
+    }
+
+    // Children positions
+    const childCenters = group.children
+      .map((child) => elMap.get(child.id))
+      .filter(Boolean);
+
+    if (childCenters.length === 0) return;
+
+    // For each child, draw a path: parent bottom -> midY -> child top
+    childCenters.forEach((childInfo) => {
+      const childX = childInfo.centerX;
+      const childY = childInfo.topY - 4;
+
+      const midY = (parentY + childY) / 2;
+
+      const path = document.createElementNS(svgNS, "path");
+      const d = `M ${parentX} ${parentY} L ${parentX} ${midY} L ${childX} ${midY} L ${childX} ${childY}`;
+      path.setAttribute("d", d);
+      svg.appendChild(path);
+    });
+  });
+
+  treeLayout.prepend(svg);
 }
 
 /* ---------------------------
@@ -213,7 +356,8 @@ async function loadFamilyTree() {
 
   // Update the title (family name or example)
   await updateTreeTitle(familyId);
-    // Keep the nav "Family Tree" link locked on this family if possible
+
+  // Keep the nav "Family Tree" link locked on this family if possible
   if (familyId) {
     const navTreeLink = document.querySelector('nav a[href="/tree"]');
     if (navTreeLink) {
@@ -224,8 +368,6 @@ async function loadFamilyTree() {
   treeLayout.innerHTML = "<p>Loading family tree...</p>";
 
   try {
-    // If familyId exists, this will pull from "people" for that family.
-    // If not, it falls back to your static "example" collection.
     const allPeople = await getAllPeople(familyId);
     console.log("All people from Firestore:", allPeople, "for familyId:", familyId);
 
@@ -247,15 +389,17 @@ async function loadFamilyTree() {
       const peopleInGen = genMap.get(genNumber) || [];
       console.log(`Generation ${genNumber} people:`, peopleInGen);
 
-      // IMPORTANT: do NOT resort by name here; we rely on BFS order
       renderGeneration(genNumber, peopleInGen, treeLayout, familyId);
     });
+
+    // cache and draw connectors
+    lastRenderedPeople = allPeople;
+    drawParentChildLines(lastRenderedPeople);
   } catch (err) {
     console.error("Error loading family tree:", err);
     treeLayout.innerHTML = "<p>Error loading family tree.</p>";
   }
 }
-
 
 /* ---------------------------
    INIT
@@ -295,4 +439,11 @@ document.addEventListener("DOMContentLoaded", () => {
   setupAddPersonModal();
   setupCopyCode();
   loadFamilyTree();
+
+  // Redraw connectors on resize so lines stay aligned
+  window.addEventListener("resize", () => {
+    if (lastRenderedPeople && lastRenderedPeople.length > 0) {
+      drawParentChildLines(lastRenderedPeople);
+    }
+  });
 });
