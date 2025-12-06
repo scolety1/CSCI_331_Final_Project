@@ -261,25 +261,22 @@ async function loadFamilyTree() {
    INIT
 --------------------------- */
 
-// Setup copy code button functionality
-function setupCopyCodeButton() {
-  const copyBtn = document.getElementById("copyCodeBtn");
+// Setup copy code functionality - make the code itself clickable
+function setupCopyCode() {
   const joinCodeValue = document.getElementById("joinCodeValue");
   
-  if (copyBtn && joinCodeValue) {
-    copyBtn.addEventListener("click", async () => {
+  if (joinCodeValue) {
+    joinCodeValue.addEventListener("click", async () => {
       const code = joinCodeValue.textContent;
       if (code) {
         try {
           await navigator.clipboard.writeText(code);
-          // Visual feedback
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = "✓";
-          copyBtn.style.opacity = "0.7";
+          // Visual feedback - briefly change background
+          const originalBg = joinCodeValue.style.backgroundColor;
+          joinCodeValue.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
           setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.opacity = "1";
-          }, 2000);
+            joinCodeValue.style.backgroundColor = originalBg;
+          }, 500);
         } catch (err) {
           console.error("Failed to copy code:", err);
           // Fallback: select the text
@@ -296,6 +293,6 @@ function setupCopyCodeButton() {
 
 document.addEventListener("DOMContentLoaded", () => {
   setupAddPersonModal();
-  setupCopyCodeButton();
+  setupCopyCode();
   loadFamilyTree();
 });

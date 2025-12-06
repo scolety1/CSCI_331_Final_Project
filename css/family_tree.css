@@ -31,22 +31,13 @@
     background: rgba(255, 255, 255, 0.1);
     padding: 6px 12px;
     border-radius: 6px;
-}
-
-.copy-code-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: #f9fafb;
-    padding: 6px 10px;
-    border-radius: 6px;
     cursor: pointer;
-    font-size: 1rem;
     transition: background-color 0.25s ease;
+    user-select: none;
 }
 
-.copy-code-btn:hover {
+.join-code-value:hover {
     background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .join-code-hint {
