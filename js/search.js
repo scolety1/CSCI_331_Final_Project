@@ -12,9 +12,8 @@ let allPeople = [];
  */
 function createResultCard(person) {
   const link = document.createElement("a");
-  // Adjust path if profile.html is in a different folder:
-  // if search_page.html and profile.html are both in /html: use just "profile.html"
-  link.href = `profile.html?person=${encodeURIComponent(person.id)}`;
+  // Use absolute path for Vercel routing
+  link.href = `/profile?person=${encodeURIComponent(person.id)}`;
   link.className = "person-card search-result-card";
   link.style.textDecoration = "none";
   link.style.color = "inherit";

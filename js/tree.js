@@ -66,7 +66,7 @@ function createPersonCard(person) {
   const fullTitleName = toTitleFullName(person.firstName, person.lastName);
 
   const link = document.createElement("a");
-  link.href = `../html/profile.html?person=${encodeURIComponent(person.id)}`;
+  link.href = `/profile?person=${encodeURIComponent(person.id)}`;
   link.style.textDecoration = "none";
   link.style.color = "inherit";
 
@@ -190,9 +190,9 @@ async function loadFamilyTree() {
   await updateTreeTitle(familyId);
     // Keep the nav "Family Tree" link locked on this family if possible
   if (familyId) {
-    const navTreeLink = document.querySelector('nav a[href="tree_page.html"]');
+    const navTreeLink = document.querySelector('nav a[href="/tree"]');
     if (navTreeLink) {
-      navTreeLink.href = `tree_page.html?familyId=${familyId}`;
+      navTreeLink.href = `/tree?familyId=${familyId}`;
     }
   }
 

@@ -95,7 +95,7 @@ if (createFamilyForm) {
             );
 
             // Redirect into the tree view for this family
-            window.location.href = `../html/tree_page.html?familyId=${familyId}`;
+            window.location.href = `/tree?familyId=${familyId}`;
         } catch (err) {
             console.error("Error creating family tree:", err);
             alert("Sorry, something went wrong creating the family tree. Please try again.");
@@ -141,7 +141,7 @@ if (joinFamilyForm) {
       const familyId = familyDoc.id;
 
       // Redirect into that family's tree
-      window.location.href = `../html/tree_page.html?familyId=${familyId}`;
+      window.location.href = `/tree?familyId=${familyId}`;
     } catch (err) {
       console.error("Error joining family tree:", err);
       alert("Sorry, there was an issue joining that family tree. Please try again.");

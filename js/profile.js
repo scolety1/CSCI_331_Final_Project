@@ -365,7 +365,7 @@ document
       await deleteDoc(doc(db, "example", personId));
       alert("Person removed successfully.");
       // Redirect back to tree page using absolute path
-      window.location.href = "../html/tree_page.html";
+      window.location.href = "/tree";
     } catch (error) {
       console.error("Error deleting person:", error);
       alert("Failed to delete this person.");
