@@ -63,7 +63,8 @@
     background-color: #f9fafb;
     color: #111827;
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-    overflow: visible;
+    overflow-x: auto;   /* allow horizontal scroll */
+    overflow-y: auto;   /* just in case it gets tall */
 }
 
 /* SVG layer for parent→child connectors */
@@ -94,19 +95,14 @@
 
 /* Title above each generation row */
 .generation-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #6b7280;
-    margin: 0;
+    display: none !important;
 }
 
 /* Row that actually holds the cards / spouse pairs */
 .generation-row {
     position: relative;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;      /* 🔥 keep everyone on the same line */
     gap: 24px;
     justify-content: center;
     z-index: 1; /* keep above SVG lines */
