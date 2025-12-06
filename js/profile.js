@@ -23,10 +23,12 @@ import {
 
 
 let personId = null;
+let familyId = null;
 
 async function loadProfile() {
   const params = new URLSearchParams(window.location.search);
   personId = params.get("person");
+  familyId = params.get("familyId");
 
   if (!personId) {
     document.getElementById("name").textContent =
@@ -35,8 +37,21 @@ async function loadProfile() {
   }
 
   try {
-    const docRef = doc(db, "example", personId);
-    const docSnap = await getDoc(docRef);
+    // Try to load from the correct collection based on familyId
+    // If familyId is provided, use "people" collection, otherwise try "example"
+    let docRef;
+    let docSnap;
+    
+    if (familyId) {
+      docRef = doc(db, "people", personId);
+      docSnap = await getDoc(docRef);
+    }
+    
+    // If not found in "people" or no familyId, try "example"
+    if (!familyId || !docSnap.exists()) {
+      docRef = doc(db, "example", personId);
+      docSnap = await getDoc(docRef);
+    }
 
     if (!docSnap.exists()) {
       document.getElementById("name").textContent = "Profile not found.";
@@ -45,6 +60,12 @@ async function loadProfile() {
 
     const data = docSnap.data();
     const person = { id: personId, ...data };
+    
+    // If we loaded from "people" collection, extract familyId from the data
+    // or use the one from URL
+    if (!familyId && data.familyId) {
+      familyId = data.familyId;
+    }
 
     // NAME - combine firstName and lastName
     const fullName = toTitleFullName(data.firstName || "", data.lastName || "");
@@ -94,7 +115,8 @@ async function loadProfile() {
       spouseName || "No spouse listed.";
 
     // CHILDREN - use helper function to get children
-    const allPeople = await getAllPeople();
+    // Pass familyId so we get children from the correct collection
+    const allPeople = await getAllPeople(familyId);
     const children = getChildren(person, allPeople);
     if (children.length > 0) {
       const childrenNames = children.map(child => 
@@ -272,7 +294,9 @@ if (editForm) {
 
     // ----- UPDATE EXISTING DOC IN FIRESTORE -----
     try {
-      const personRef = doc(db, "example", personId);
+      // Use the correct collection based on familyId
+      const collectionName = familyId ? "people" : "example";
+      const personRef = doc(db, collectionName, personId);
       await updateDoc(personRef, personData);
 
       alert("Person updated! Reloading profile...");
@@ -362,10 +386,13 @@ document
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, "example", personId));
+      // Use the correct collection based on familyId
+      const collectionName = familyId ? "people" : "example";
+      await deleteDoc(doc(db, collectionName, personId));
       alert("Person removed successfully.");
-      // Redirect back to tree page using absolute path
-      window.location.href = "/tree";
+      // Redirect back to tree page, preserving familyId if it exists
+      const redirectUrl = familyId ? `/tree?familyId=${familyId}` : "/tree";
+      window.location.href = redirectUrl;
     } catch (error) {
       console.error("Error deleting person:", error);
       alert("Failed to delete this person.");

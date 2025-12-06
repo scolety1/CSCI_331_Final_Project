@@ -6,14 +6,19 @@ import {
 } from "./helpers.js";
 
 let allPeople = [];
+let currentFamilyId = null;
 
 /**
  * Render a single search result card that links to the profile page.
  */
-function createResultCard(person) {
+function createResultCard(person, familyId = null) {
   const link = document.createElement("a");
-  // Use absolute path for Vercel routing
-  link.href = `/profile?person=${encodeURIComponent(person.id)}`;
+  // Use absolute path for Vercel routing, include familyId if present
+  let profileUrl = `/profile?person=${encodeURIComponent(person.id)}`;
+  if (familyId) {
+    profileUrl += `&familyId=${encodeURIComponent(familyId)}`;
+  }
+  link.href = profileUrl;
   link.className = "person-card search-result-card";
   link.style.textDecoration = "none";
   link.style.color = "inherit";
@@ -55,7 +60,7 @@ function runSearch(rawQuery, resultsContainer) {
     return;
   }
 
-  // Use your normalization so we match what’s in Firestore
+  // Use your normalization so we match what's in Firestore
   const q = normalizeNamePart(trimmed);
   console.log("Search query (normalized):", q);
 
@@ -75,7 +80,7 @@ function runSearch(rawQuery, resultsContainer) {
   list.className = "search-results-list";
 
   matches.forEach((person) => {
-    const card = createResultCard(person);
+    const card = createResultCard(person, currentFamilyId);
     list.appendChild(card);
   });
 
@@ -97,8 +102,12 @@ async function initSearchPage() {
 
   console.log("Initializing search page…");
 
+  // Get familyId from URL if present
+  const params = new URLSearchParams(window.location.search);
+  currentFamilyId = params.get("familyId");
+
   try {
-    allPeople = await getAllPeople();
+    allPeople = await getAllPeople(currentFamilyId);
     console.log("Loaded people for search (count):", allPeople.length);
     console.log("Sample people:", allPeople.slice(0, 3));
   } catch (err) {

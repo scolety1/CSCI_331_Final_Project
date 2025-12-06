@@ -7,11 +7,18 @@ import {
 
 const form = document.getElementById("addPersonForm");
 
-
+// Helper function to get familyId from URL
+function getCurrentFamilyId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("familyId");
+}
 
 if(form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // Get familyId from URL if present
+    const familyId = getCurrentFamilyId();
 
     // ----- GET & CLEAN INPUT VALUES -----
     const rawFirstName   = document.getElementById("firstName").value.trim();
@@ -66,9 +73,16 @@ if(form) {
     if (spouseFirstName)  personData.spouseFirstName  = spouseFirstName;
     if (spouseLastName)   personData.spouseLastName   = spouseLastName;
     
+    // Add familyId if we're in a family tree (not example tree)
+    if (familyId) {
+      personData.familyId = familyId;
+    }
+    
     // ----- SAVE TO FIRESTORE -----
     try {
-      await addDoc(collection(db, "example"), personData);
+      // Use "people" collection if familyId exists, otherwise "example"
+      const collectionName = familyId ? "people" : "example";
+      await addDoc(collection(db, collectionName), personData);
       alert("Person added! Reload the page to see them.");
       form.reset();
     } catch (error) {
@@ -78,5 +92,5 @@ if(form) {
   });
   
 } else {
-    console.log("postPeople.js: no #addPersonForm on this page, skipping add-person setup.");
+  console.log("postPeople.js: no #addPersonForm on this page, skipping add-person setup.");
 }

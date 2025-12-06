@@ -51,7 +51,7 @@ function setupAddPersonModal() {
    CARD CREATION
 --------------------------- */
 
-function createPersonCard(person) {
+function createPersonCard(person, familyId = null) {
   // birthDate is likely a Firestore Timestamp
   let formattedDate = "Unknown";
   if (person.birthDate && typeof person.birthDate.toDate === "function") {
@@ -66,7 +66,12 @@ function createPersonCard(person) {
   const fullTitleName = toTitleFullName(person.firstName, person.lastName);
 
   const link = document.createElement("a");
-  link.href = `/profile?person=${encodeURIComponent(person.id)}`;
+  // Include familyId in profile link if it exists
+  let profileUrl = `/profile?person=${encodeURIComponent(person.id)}`;
+  if (familyId) {
+    profileUrl += `&familyId=${encodeURIComponent(familyId)}`;
+  }
+  link.href = profileUrl;
   link.style.textDecoration = "none";
   link.style.color = "inherit";
 
@@ -87,7 +92,7 @@ function createPersonCard(person) {
    RENDER ONE GENERATION ROW
 --------------------------- */
 
-function renderGeneration(genNumber, peopleInGen, treeLayout) {
+function renderGeneration(genNumber, peopleInGen, treeLayout, familyId = null) {
   const genContainer = document.createElement("div");
   genContainer.className = "generation";
   genContainer.id = `gen-${genNumber}`;
@@ -116,8 +121,8 @@ function renderGeneration(genNumber, peopleInGen, treeLayout) {
       const pairContainer = document.createElement("div");
       pairContainer.className = "spouse-pair";
 
-      const personCard = createPersonCard(person);
-      const spouseCard = createPersonCard(spouse);
+      const personCard = createPersonCard(person, familyId);
+      const spouseCard = createPersonCard(spouse, familyId);
 
       pairContainer.appendChild(personCard);
       pairContainer.appendChild(spouseCard);
@@ -128,7 +133,7 @@ function renderGeneration(genNumber, peopleInGen, treeLayout) {
       usedIds.add(spouse.id);
     } else {
       // single person
-      const card = createPersonCard(person);
+      const card = createPersonCard(person, familyId);
       row.appendChild(card);
       usedIds.add(person.id);
     }
@@ -223,7 +228,7 @@ async function loadFamilyTree() {
       console.log(`Generation ${genNumber} people:`, peopleInGen);
 
       // IMPORTANT: do NOT resort by name here; we rely on BFS order
-      renderGeneration(genNumber, peopleInGen, treeLayout);
+      renderGeneration(genNumber, peopleInGen, treeLayout, familyId);
     });
   } catch (err) {
     console.error("Error loading family tree:", err);
