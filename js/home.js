@@ -9,6 +9,7 @@ import {
   getDocs,
   limit
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+import { setFamilyId } from "./helpers.js";
 
 // Grab elements that only exist on the home page.
 // If they aren't there, just bail so this file can be safely imported everywhere.
@@ -86,6 +87,9 @@ if (createFamilyForm) {
 
             const familyId = docRef.id;
 
+            // Store familyId in localStorage for persistence
+            setFamilyId(familyId);
+
             // You can replace this alert with a nice modal later if you want
             alert(
                 `Your family tree has been created!\n\n` +
@@ -139,6 +143,9 @@ if (joinFamilyForm) {
 
       const familyDoc = snap.docs[0];
       const familyId = familyDoc.id;
+
+      // Store familyId in localStorage for persistence
+      setFamilyId(familyId);
 
       // Redirect into that family's tree
       window.location.href = `/tree?familyId=${familyId}`;

@@ -4,14 +4,9 @@ import {
   collection,
   Timestamp
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+import { getCurrentFamilyId } from "./helpers.js";
 
 const form = document.getElementById("addPersonForm");
-
-// Helper function to get familyId from URL
-function getCurrentFamilyId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("familyId");
-}
 
 if(form) {
   form.addEventListener("submit", async (e) => {

@@ -8,6 +8,68 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
 /* -----------------------------------
+   FAMILY ID PERSISTENCE HELPERS
+----------------------------------- */
+
+const FAMILY_ID_STORAGE_KEY = "currentFamilyId";
+
+/**
+ * Store familyId in localStorage for persistence across page navigation
+ */
+export function setFamilyId(familyId) {
+  if (familyId) {
+    localStorage.setItem(FAMILY_ID_STORAGE_KEY, familyId);
+  } else {
+    localStorage.removeItem(FAMILY_ID_STORAGE_KEY);
+  }
+}
+
+/**
+ * Get familyId from localStorage
+ */
+export function getStoredFamilyId() {
+  return localStorage.getItem(FAMILY_ID_STORAGE_KEY);
+}
+
+/**
+ * Clear stored familyId (e.g., when viewing example tree)
+ */
+export function clearFamilyId() {
+  localStorage.removeItem(FAMILY_ID_STORAGE_KEY);
+}
+
+/**
+ * Get current familyId from URL or localStorage
+ * URL takes precedence if present
+ * @param {boolean} useStored - If false, only check URL (default: true)
+ */
+export function getCurrentFamilyId(useStored = true) {
+  // First check URL parameters
+  const params = new URLSearchParams(window.location.search);
+  const urlFamilyId = params.get("familyId");
+  
+  if (urlFamilyId) {
+    // If familyId is in URL, update localStorage to persist it
+    setFamilyId(urlFamilyId);
+    return urlFamilyId;
+  }
+  
+  // If URL explicitly has familyId=null or empty, clear stored value
+  if (params.has("familyId") && !urlFamilyId) {
+    clearFamilyId();
+    return null;
+  }
+  
+  // Otherwise, check localStorage if useStored is true
+  if (useStored) {
+    const storedFamilyId = getStoredFamilyId();
+    return storedFamilyId || null;
+  }
+  
+  return null;
+}
+
+/* -----------------------------------
    NORMALIZATION HELPERS
 ----------------------------------- */
 

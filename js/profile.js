@@ -19,6 +19,7 @@ import {
   toTitle, 
   getChildren,
   getAllPeople,
+  getCurrentFamilyId as getFamilyIdFromHelper,
 } from "./helpers.js";
 
 
@@ -28,7 +29,9 @@ let familyId = null;
 async function loadProfile() {
   const params = new URLSearchParams(window.location.search);
   personId = params.get("person");
-  familyId = params.get("familyId");
+  
+  // Get familyId from URL or localStorage
+  familyId = params.get("familyId") || getFamilyIdFromHelper();
 
   if (!personId) {
     document.getElementById("name").textContent =

@@ -10,6 +10,7 @@ import {
   sortGenerationKeys,
   areSpouses,
   toTitleFullName,
+  getCurrentFamilyId as getFamilyIdFromHelper,
 } from "./helpers.js";
 
 /* ---------------------------
@@ -147,9 +148,8 @@ function renderGeneration(genNumber, peopleInGen, treeLayout, familyId = null) {
    MAIN LOAD FUNCTION
 --------------------------- */
 function getCurrentFamilyId() {
-  const params = new URLSearchParams(window.location.search);
-  const familyId = params.get("familyId");
-  return familyId || null;
+  // Use the helper function which checks URL first, then localStorage
+  return getFamilyIdFromHelper();
 }
 
 async function updateTreeTitle(familyId) {

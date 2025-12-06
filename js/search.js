@@ -3,6 +3,7 @@ import {
   toTitleFullName,
   normalizeNamePart,
   buildFullName,
+  getCurrentFamilyId,
 } from "./helpers.js";
 
 let allPeople = [];
@@ -102,9 +103,8 @@ async function initSearchPage() {
 
   console.log("Initializing search page…");
 
-  // Get familyId from URL if present
-  const params = new URLSearchParams(window.location.search);
-  currentFamilyId = params.get("familyId");
+  // Get familyId from URL or localStorage
+  currentFamilyId = getCurrentFamilyId();
 
   try {
     allPeople = await getAllPeople(currentFamilyId);
