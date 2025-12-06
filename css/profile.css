@@ -1,29 +1,118 @@
-/* ===== PROFILE PAGE ===== */
+/* Center the profile card on the page */
+.profile-page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.15);
-    text-align: left;
+/* Main card (image + info) */
+.profile-card {
+  display: flex;
+  gap: 2rem;
+  max-width: 900px;
+  width: 100%;
+  padding: 2rem 2.5rem;
+  background: rgba(8, 20, 40, 0.95); /* works with your dark theme */
+  border-radius: 16px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+  color: #f5f7ff;
+}
+
+/* LEFT COLUMN: image container */
+.profile-photo-wrapper {
+  flex: 0 0 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-image {
+  width: 260px;
+  height: 260px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: #1d2940; /* placeholder if no image loaded yet */
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+/* RIGHT COLUMN: text */
+.profile-details {
+  flex: 1;
+}
+
+.profile-details h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
 }
 
 .profileInfo {
-    color: #111827;
-    font-size: 1.2rem;
-    margin-top: 10px;
+  margin: 0.35rem 0;
+  line-height: 1.4;
 }
 
-h1 {
-    color: #1f2937; /* dark gray */
+/* Buttons row */
+.profile-buttons {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-.birthday {
-    color: #3e8e41;
+/* Reuse .button from global.css but tweak spacing/colors */
+.profile-btn {
+  padding-inline: 1.2rem;
+  padding-block: 0.55rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
 }
 
-.fart {
-    color: black;
+.profile-btn.primary {
+  background: #4a8dff;
+  color: #fff;
+}
+
+.profile-btn.secondary {
+  background: #ffffff0f;
+  color: #f5f7ff;
+}
+
+.profile-btn.danger {
+  background: #ff4e4e;
+  color: #fff;
+}
+
+.profile-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile layout: stack columns */
+@media (max-width: 768px) {
+  .profile-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-details {
+    width: 100%;
+  }
+
+  .profile-buttons {
+    justify-content: center;
+  }
+}
+
+/* No-photo state: hide left column and keep card centered */
+.profile-card.no-photo .profile-photo-wrapper {
+  display: none;
 }

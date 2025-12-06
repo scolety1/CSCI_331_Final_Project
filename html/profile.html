@@ -10,24 +10,63 @@
 
 </head>
 <body>
+  <div class="profile-page">
+    <section class="profile-card" id="profileCard">
+      <!-- LEFT: PHOTO -->
+      <div class="profile-photo-wrapper">
+        <img id="profileImage" class="profile-image" alt="Profile picture" />
+      </div>
 
-  <div class="profile-container">
-    <img id="profileImage" class="profile-image" alt="Profile picture" />
+      <!-- RIGHT: DETAILS -->
+      <div class="profile-details">
+        <h1 id="name">Loading...</h1>
 
-    <h1 id="name"> Loading...</h1>
-    <p class="profileInfo"><strong>Birth Day: </strong><span id="birthDate"></span> </p>
-    <p class="profileInfo"><strong>Parents:</strong> <span id="parents"></span></p>
-    <p class="profileInfo"><strong>Spouse:</strong> <span id="spouse"></span></p>
-    <p class="profileInfo"><strong>Children:</strong> <span id="children"></span></p>
-    <p class="profileInfo"><strong>Bio:</strong> <span id="bio"></span></p>
-    <p class="profileInfo"><strong>Fun Fact (from their birthday):</strong> <span id="funFact">Loading...</span></p>
+        <p class="profileInfo">
+          <strong>Birth Day: </strong>
+          <span id="birthDate"></span>
+        </p>
 
-    <a href="/tree" class="button"> Back to Family Tree </a>
-    <button id="deletePersonBtn" class="button"> Remove This Person </button>
-    <button id="editPersonBtn" class="button"> Edit This Person </button>
+        <p class="profileInfo">
+          <strong>Parents: </strong>
+          <span id="parents"></span>
+        </p>
+
+        <p class="profileInfo">
+          <strong>Spouse: </strong>
+          <span id="spouse"></span>
+        </p>
+
+        <p class="profileInfo">
+          <strong>Children: </strong>
+          <span id="children"></span>
+        </p>
+
+        <p class="profileInfo">
+          <strong>Bio: </strong>
+          <span id="bio"></span>
+        </p>
+
+        <p class="profileInfo">
+          <strong>Fun Fact (from their birthday): </strong>
+          <span id="funFact">Loading...</span>
+        </p>
+
+        <div class="profile-buttons">
+          <a href="/tree" class="button profile-btn secondary">
+            Back to Family Tree
+          </a>
+          <button id="deletePersonBtn" class="button profile-btn danger">
+            Remove This Person
+          </button>
+          <button id="editPersonBtn" class="button profile-btn primary">
+            Edit This Person
+          </button>
+        </div>
+      </div>
+    </section>
   </div>
 
-
+  <!-- EXISTING MODAL, unchanged except for indentation -->
   <div id="editPersonModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -71,9 +110,10 @@
         </label>
         <button type="submit">Save</button>
       </form>
-
     </div>
   </div>
+
   <script type="module" src="/js/profile.js"></script>
 </body>
+
 </html>

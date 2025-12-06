@@ -134,16 +134,21 @@ async function loadProfile() {
     document.getElementById("bio").textContent =
       data.bio || "No bio available.";
 
-    const profileImgEl = document.getElementById("profileImage");
-    if (profileImgEl) {
+      const profileImgEl = document.getElementById("profileImage");
+      const profileCardEl = document.getElementById("profileCard");
+
+      if (profileImgEl) {
         if (data.image) {
-            profileImgEl.src = data.image;
-            profileImgEl.style.display = "block";
+          profileImgEl.src = data.image;
+          profileImgEl.style.display = "block";
+          if (profileCardEl) profileCardEl.classList.remove("no-photo");
         } else {
-            // Hide the img tag if no image yet
-            profileImgEl.style.display = "none";
+          // Hide the image and switch layout to text-only
+          profileImgEl.style.display = "none";
+          if (profileCardEl) profileCardEl.classList.add("no-photo");
         }
-    }
+      }
+
     // FUN FACT - fetch based on birthday
     if (data.birthDate && typeof data.birthDate.toDate === "function") {
         const birthDate = data.birthDate.toDate();
