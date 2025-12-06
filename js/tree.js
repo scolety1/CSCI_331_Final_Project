@@ -150,6 +150,7 @@ function drawParentChildLines(people) {
   const treeLayout = document.getElementById("tree-layout");
   if (!treeLayout) return;
 
+  // Remove existing SVG
   const oldSvg = document.getElementById("tree-lines-svg");
   if (oldSvg && oldSvg.parentNode) {
     oldSvg.parentNode.removeChild(oldSvg);
@@ -172,36 +173,30 @@ function drawParentChildLines(people) {
   svg.setAttribute("height", height);
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-  // Map personId -> position info
+  // Map personId -> position info (center of card)
   const elMap = new Map();
   const allEls = treeLayout.querySelectorAll("[data-person-id]");
   allEls.forEach((el) => {
     const id = el.dataset.personId;
     if (!id) return;
-    const rect = el.getBoundingClientRect();
 
+    const rect = el.getBoundingClientRect();
     const centerX =
       rect.left - containerRect.left + scrollLeft + rect.width / 2;
     const topY = rect.top - containerRect.top + scrollTop;
     const bottomY = rect.bottom - containerRect.top + scrollTop;
 
-    elMap.set(id, {
-      el,
-      rect,
-      centerX,
-      topY,
-      bottomY,
-    });
+    elMap.set(id, { centerX, topY, bottomY });
   });
 
-  // Build fullName -> person map
+  // fullName -> person
   const nameToPerson = new Map();
   people.forEach((p) => {
     const full = buildFullName(p.firstName, p.lastName);
     if (full) nameToPerson.set(full, p);
   });
 
-  // Group children by their parent pair
+  // group children by parent pair
   const parentGroupMap = new Map();
 
   people.forEach((child) => {
@@ -213,7 +208,7 @@ function drawParentChildLines(people) {
     if (p1 && p2) {
       key = [p1, p2].sort().join("|");
     } else {
-      key = p1 || p2;
+      key = p1 || p2; // single parent
     }
 
     if (!parentGroupMap.has(key)) {
@@ -251,38 +246,28 @@ function drawParentChildLines(people) {
       .filter(Boolean);
     if (childInfos.length === 0) return;
 
-    const parentXs = parentInfos.map((pi) => pi.centerX);
+    // compute a mid Y level between parents and kids
     const parentYs = parentInfos.map((pi) => pi.bottomY + 4);
-
-    const childXs = childInfos.map((ci) => ci.centerX);
     const childYs = childInfos.map((ci) => ci.topY - 4);
 
-    const allXs = parentXs.concat(childXs);
-    const minX = Math.min(...allXs);
-    const maxX = Math.max(...allXs);
+    const midY =
+      (Math.min(...parentYs) + Math.max(...childYs)) / 2;
 
-    const minParentY = Math.min(...parentYs);
-    const maxChildY = Math.max(...childYs);
-    const midY = (minParentY + maxChildY) / 2;
-
-    // Horizontal connector bar across this family
-    const horiz = document.createElementNS(svgNS, "path");
-    horiz.setAttribute("d", `M ${minX} ${midY} L ${maxX} ${midY}`);
-    svg.appendChild(horiz);
-
-    // Vertical from each parent down to the bar
+    // verticals from each parent center down to midY
     parentInfos.forEach((pi, idx) => {
+      const px = pi.centerX;
       const py = parentYs[idx];
-      const px = parentXs[idx];
+
       const path = document.createElementNS(svgNS, "path");
       path.setAttribute("d", `M ${px} ${py} L ${px} ${midY}`);
       svg.appendChild(path);
     });
 
-    // Vertical from bar down/up to each child
+    // verticals from each child center up to midY
     childInfos.forEach((ci, idx) => {
+      const cx = ci.centerX;
       const cy = childYs[idx];
-      const cx = childXs[idx];
+
       const path = document.createElementNS(svgNS, "path");
       path.setAttribute("d", `M ${cx} ${midY} L ${cx} ${cy}`);
       svg.appendChild(path);
@@ -291,6 +276,7 @@ function drawParentChildLines(people) {
 
   treeLayout.prepend(svg);
 }
+
 
 /* ---------------------------
    MAIN LOAD FUNCTION
